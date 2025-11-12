@@ -2,12 +2,15 @@
 import { projects } from '@/data/projects';
 
 function ProjectCard({ project, index }: { project: typeof projects[0], index: number }) {
+  // Alternate between dark gray and darker gray
+  const bgColor = index % 2 === 0 ? 'bg-[#1a1a1a]' : 'bg-[#0f0f0f]';
+  
   return (
     <article
       style={{
-        top: `${160 + index * 80}px`, // Increased spacing from 50px to 70px
+        top: `${160 + index * 80}px`,
       }}
-      className="sticky bg-black rounded-2xl border border-white/5 hover:border-white/10 transition-colors shadow-xl overflow-hidden p-8"
+      className={`sticky ${bgColor} rounded-2xl border border-white/5 hover:border-white/10 transition-colors shadow-xl overflow-hidden p-8 h-[500px]`}
     >
       <div className="mb-4 font-bold text-white text-2xl">{project.title}</div>
       <div className="text-base text-gray-300 mb-6 leading-relaxed max-w-3xl">{project.description}</div>
@@ -53,8 +56,8 @@ export default function ProjectsGrid() {
           <h2 className="font-monoHead text-4xl text-center text-white">featured projects</h2>
         </div>
         
-        {/* Stacking Cards */}
-        <div className="max-w-5xl mx-auto space-y-12">
+        {/* Stacking Cards - wrapper with defined height to control sticky behavior */}
+        <div className="max-w-5xl mx-auto relative" style={{ height: `${projects.length * 600}px` }}>
           {projects.map((project, index) => (
             <ProjectCard key={project.id} project={project} index={index} />
           ))}

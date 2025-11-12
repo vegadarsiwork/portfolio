@@ -24,10 +24,19 @@ const navItems = [
 
 export default function FloatingNav() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
+      
+      // Check if projects section is at the top of viewport
+      const projectsSection = document.querySelector('#projects');
+      if (projectsSection) {
+        const rect = projectsSection.getBoundingClientRect();
+        // Show overlay when projects section touches the top (within 100px threshold)
+        setShowOverlay(rect.top <= 0 && rect.bottom > 0);
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -71,9 +80,14 @@ export default function FloatingNav() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -100, opacity: 0 }}
             transition={{ duration: 0.3, type: 'spring', stiffness: 260, damping: 20 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
+            className="fixed top-0 left-0 right-0 z-50"
           >
-            <Dock className="items-end pb-3 bg-[#070707]/95 backdrop-blur-md border border-white/10">
+            {/* Black overlay above dock - only when projects section is visible */}
+            {showOverlay && <div className="h-4 bg-black" />}
+            
+            {/* Dock centered - consistent padding */}
+            <div className={`flex justify-center pt-1 ${showOverlay ? 'bg-black' : 'pt-5'}`}>
+              <Dock className="items-end pb-3 bg-[#070707]/95 backdrop-blur-md border border-white/10">
               <DockItem className="aspect-square rounded-full bg-white/5 hover:bg-white/10 transition-colors">
                 <DockLabel>home</DockLabel>
                 <DockIcon>
@@ -96,6 +110,10 @@ export default function FloatingNav() {
                 </DockItem>
               ))}
             </Dock>
+            </div>
+            
+            {/* Black overlay below dock - only when projects section is visible */}
+            {showOverlay && <div className="h-6 bg-black" />}
           </motion.div>
         )}
       </AnimatePresence>

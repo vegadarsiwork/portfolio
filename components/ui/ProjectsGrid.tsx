@@ -1,26 +1,65 @@
+'use client';
 import { projects } from '@/data/projects';
+
+function ProjectCard({ project, index }: { project: typeof projects[0], index: number }) {
+  return (
+    <article
+      style={{
+        top: `${160 + index * 80}px`, // Increased spacing from 50px to 70px
+      }}
+      className="sticky bg-black rounded-2xl border border-white/5 hover:border-white/10 transition-colors shadow-xl overflow-hidden p-8"
+    >
+      <div className="mb-4 font-bold text-white text-2xl">{project.title}</div>
+      <div className="text-base text-gray-300 mb-6 leading-relaxed max-w-3xl">{project.description}</div>
+      <div className="flex gap-3 flex-wrap mb-6">
+        {project.tech.map(t => (
+          <span key={t} className="text-sm bg-white/5 px-4 py-2 rounded-full border border-white/10">
+            {t}
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-4">
+        {project.demo && (
+          <a 
+            className="text-sm px-6 py-3 bg-gradient-to-r from-accent-1 to-accent-2 text-black rounded-lg font-medium hover:opacity-90 transition" 
+            href={project.demo} 
+            target="_blank" 
+            rel="noreferrer"
+          >
+            Live Demo
+          </a>
+        )}
+        {project.repo && (
+          <a 
+            className="text-sm px-6 py-3 border border-white/10 rounded-lg hover:bg-white/5 transition" 
+            href={project.repo} 
+            target="_blank" 
+            rel="noreferrer"
+          >
+            View Code
+          </a>
+        )}
+      </div>
+    </article>
+  );
+}
 
 export default function ProjectsGrid() {
   return (
-    <section id="projects" className="py-12 bg-black">
+    <section id="projects" className="relative pt-32 pb-20 bg-black min-h-screen">
       <div className="container mx-auto px-4">
-        <h2 className="font-monoHead text-2xl mb-4">featured projects</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map(p => (
-            <article key={p.id} className="bg-[#0a0a0a] rounded-lg p-4 border border-white/5 hover:shadow-lg transition">
-              <div className="mb-3 font-bold text-white">{p.title}</div>
-              <div className="text-sm text-gray-300 mb-4">{p.description}</div>
-              <div className="flex gap-2 flex-wrap mb-3">
-                {p.tech.map(t => <span key={t} className="text-xs bg-white/5 px-2 py-1 rounded">{t}</span>)}
-              </div>
-              <div className="mt-auto flex gap-2">
-                {p.demo && <a className="text-sm underline" href={p.demo} target="_blank" rel="noreferrer">live</a>}
-                {p.repo && <a className="text-sm underline" href={p.repo} target="_blank" rel="noreferrer">code</a>}
-              </div>
-            </article>
+        {/* Sticky Header - locks at top when scrolling */}
+        <div className="sticky top-20 z-20 bg-black py-6 mb-20">
+          <h2 className="font-monoHead text-4xl text-center text-white">featured projects</h2>
+        </div>
+        
+        {/* Stacking Cards */}
+        <div className="max-w-5xl mx-auto space-y-12">
+          {projects.map((project, index) => (
+            <ProjectCard key={project.id} project={project} index={index} />
           ))}
         </div>
       </div>
     </section>
-  )
+  );
 }

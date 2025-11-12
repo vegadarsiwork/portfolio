@@ -1,26 +1,47 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@font-face {
+  font-family: 'Aeonik';
+  src: url('/fonts/Aeonik-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@font-face {
+  font-family: 'Aeonik';
+  src: url('/fonts/Aeonik-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  /* Custom Colors */
+  --color-bg: #070707;
+  --color-muted: #e6e6e6;
+  --color-accent-1: #00ffd5;
+  --color-accent-2: #ff2d9c;
+  
+  /* Custom Font Families */
+  --font-family-mono-head: 'Silkscreen', monospace;
+  --font-family-body: 'Aeonik', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root { 
+  --bg: #070707;
+  --muted: #e6e6e6;
+  --accent-1: #00ffd5;
+  --accent-2: #ff2d9c;
+}
+
+html, body, #root, #__next {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--muted);
+  font-family: 'Aeonik', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }

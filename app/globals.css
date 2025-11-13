@@ -35,6 +35,10 @@
   --accent-2: #ff2d9c;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body, #root, #__next {
   height: 100%;
 }

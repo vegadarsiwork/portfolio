@@ -8,7 +8,7 @@ function ProjectCard({ project, index }: { project: typeof projects[0], index: n
   return (
     <article
       style={{
-        top: `${160 + index * 80}px`,
+        top: `${200 + index * 80}px`, // Increased from 160px to 200px to show rounded corners
       }}
       className={`sticky ${bgColor} rounded-2xl border border-white/5 hover:border-white/10 transition-colors shadow-xl overflow-hidden p-8 h-[500px]`}
     >
@@ -57,7 +57,7 @@ export default function ProjectsGrid() {
         </div>
         
         {/* Stacking Cards - wrapper with defined height to control sticky behavior */}
-        <div className="max-w-5xl mx-auto relative" style={{ height: `${projects.length * 600}px` }}>
+        <div className="max-w-7xl mx-auto relative" style={{ height: `${projects.length * 500}px` }}>
           {projects.map((project, index) => (
             <ProjectCard key={project.id} project={project} index={index} />
           ))}

@@ -9,10 +9,10 @@ const Contact = dynamic(() => import('@/components/ui/Contact'), { ssr: false })
 
 export default function DemoPage() {
   return (
-    <div className="relative">
+    <div className="relative bg-black">
       <FloatingNav />
       <Hero />
-      <div className="relative z-10 bg-black">
+      <div className="relative z-10">
         <ProjectsGrid />
         <Skills />
         <Contact />

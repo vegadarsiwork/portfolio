@@ -49,8 +49,13 @@ function ProjectCard({ project, index }: { project: typeof projects[0], index: n
 
 export default function ProjectsGrid() {
   return (
-    <section id="projects" className="relative pt-32 pb-20 bg-black min-h-screen">
-      <div className="container mx-auto px-4">
+    <section id="projects" className="relative pt-32 pb-20 min-h-screen">
+      {/* Gradient transition from PixelBlast to black */}
+      <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-transparent via-black/70 via-black/70 via-black/70 via-black/70 to-black pointer-events-none z-0"></div>
+      {/* Solid black background for rest of section */}
+
+            <div className="absolute top-48 left-0 right-0 bottom-0 bg-black -z-10"></div>
+      <div className="container mx-auto px-4 relative">
         {/* Sticky Header - locks at top when scrolling */}
         <div className="sticky top-20 z-20 bg-black py-6 mb-20">
           <h2 className="font-monoHead text-4xl text-center text-white">featured projects</h2>

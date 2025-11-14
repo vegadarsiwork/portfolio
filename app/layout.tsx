@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import React from 'react'
 
 export const metadata: Metadata = {
-  title: 'Vega — Mono ASCII Portfolio',
+  title: 'Vega — Portfolio',
   description: 'Vega Darsi — AI × UI × Web',
 }
 

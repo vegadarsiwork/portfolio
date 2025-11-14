@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import PixelBlast from './PixelBlast';
 
 type Props = {};
@@ -7,6 +7,8 @@ type Props = {};
 // NOTE: We do NOT hide attribution by default. Set NEXT_PUBLIC_HIDE_UNICORN=true only if you have license.
 
 export default function HeroAsciiOne(_: Props) {
+  const [scrollY, setScrollY] = useState(0);
+
   useEffect(() => {
     // wrap name letters for keyboard accessibility
     const nameEl = document.getElementById('hero-name');
@@ -18,7 +20,18 @@ export default function HeroAsciiOne(_: Props) {
       }).join('');
       nameEl.dataset.wrapped = '1';
     }
+
+    // Parallax scroll effect
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Text moves upward (negative) at 50% of scroll speed for parallax effect
+  const parallaxOffset = -scrollY * 0.5;
 
   return (
     <main className="sticky top-0 h-screen overflow-hidden bg-bg text-muted flex items-center">
@@ -41,8 +54,14 @@ export default function HeroAsciiOne(_: Props) {
         />
       </div>
 
-      {/* Content container - click-through except for buttons */}
-      <div className="container mx-auto px-4 relative z-10 pointer-events-none">
+      {/* Content container with parallax - click-through except for buttons */}
+      <div 
+        className="container mx-auto px-4 relative z-10 pointer-events-none"
+        style={{
+          transform: `translateY(${parallaxOffset}px)`,
+          transition: 'transform 0.05s ease-out'
+        }}
+      >
         <div className="max-w-4xl">
           {/* Badge with subtle backdrop */}
           <div className="inline-block relative">

@@ -1,13 +1,34 @@
+'use client';
 import './globals.css'
-import type { Metadata } from 'next'
-import React from 'react'
-
-export const metadata: Metadata = {
-  title: 'Vega — Portfolio',
-  description: 'Vega Darsi — AI × UI × Web',
-}
+import React, { useEffect } from 'react'
+import Lenis from 'lenis'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    // "Heavy" usually means too much smoothing. 
+    // We'll increase lerp (0.1 -> 0.15) or use duration to make it snappier.
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Default easing
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+    })
+
+    function raf(time: number) {
+      lenis.raf(time)
+      requestAnimationFrame(raf)
+    }
+
+    requestAnimationFrame(raf)
+
+    return () => {
+      lenis.destroy()
+    }
+  }, [])
+
   return (
     <html lang="en">
       <head>

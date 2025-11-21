@@ -29,7 +29,7 @@ export default function FloatingNav() {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
-      
+
       // Check if projects section is at the top of viewport
       const projectsSection = document.querySelector('#projects');
       if (projectsSection) {
@@ -76,42 +76,42 @@ export default function FloatingNav() {
       <AnimatePresence>
         {isScrolled && (
           <motion.div
-            initial={{ y: -100, opacity: 0 }}
+            initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            transition={{ duration: 0.3, type: 'spring', stiffness: 260, damping: 20 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.4, type: 'spring', stiffness: 200, damping: 25 }}
             className="fixed top-0 left-0 right-0 z-50"
           >
             {/* Black overlay above dock - only when projects section is visible */}
             {showOverlay && <div className="h-4 bg-black" />}
-            
+
             {/* Dock centered - consistent padding */}
             <div className={`flex justify-center pt-1 ${showOverlay ? 'bg-black' : 'pt-5'}`}>
               <Dock className="items-end pb-3 bg-[#070707]/95 backdrop-blur-md border border-white/10">
-              <DockItem className="aspect-square rounded-full bg-white/5 hover:bg-white/10 transition-colors">
-                <DockLabel>home</DockLabel>
-                <DockIcon>
-                  <a href="#" className="w-full h-full flex items-center justify-center">
-                    <div className="font-monoHead text-white text-sm">V</div>
-                  </a>
-                </DockIcon>
-              </DockItem>
-              {navItems.map((item, idx) => (
-                <DockItem
-                  key={idx}
-                  className="aspect-square rounded-full bg-white/5 hover:bg-white/10 transition-colors"
-                >
-                  <DockLabel>{item.title}</DockLabel>
+                <DockItem className="aspect-square rounded-full bg-white/5 hover:bg-white/10 transition-colors">
+                  <DockLabel>home</DockLabel>
                   <DockIcon>
-                    <a href={item.href} className="w-full h-full flex items-center justify-center">
-                      {item.icon}
+                    <a href="#" className="w-full h-full flex items-center justify-center">
+                      <div className="font-monoHead text-white text-sm">V</div>
                     </a>
                   </DockIcon>
                 </DockItem>
-              ))}
-            </Dock>
+                {navItems.map((item, idx) => (
+                  <DockItem
+                    key={idx}
+                    className="aspect-square rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                  >
+                    <DockLabel>{item.title}</DockLabel>
+                    <DockIcon>
+                      <a href={item.href} className="w-full h-full flex items-center justify-center">
+                        {item.icon}
+                      </a>
+                    </DockIcon>
+                  </DockItem>
+                ))}
+              </Dock>
             </div>
-            
+
             {/* Black overlay below dock - only when projects section is visible */}
             {showOverlay && <div className="h-6 bg-black" />}
           </motion.div>

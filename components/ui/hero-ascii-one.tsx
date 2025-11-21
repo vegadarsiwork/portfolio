@@ -72,13 +72,13 @@ export default function HeroAsciiOne(_: Props) {
           <div className="max-w-4xl">
             {/* Badge with subtle backdrop */}
             <div className="inline-block relative">
-              <div className="absolute -inset-2 bg-black/30 blur-md rounded-lg -z-10"></div>
+              <div className="absolute -inset-2 bg-black/30 blur-md rounded-lg -z-101"></div>
               <div className="inline-block rounded px-3 py-1 bg-[#0f0f10] text-[#bfe] text-xs mb-4">frontend · design</div>
             </div>
 
             {/* Title with subtle dark halo */}
             <div className="relative">
-              <div className="absolute -inset-3 bg-black/40 blur-lg -z-10"></div>
+              <div className="absolute -inset-3 bg-black/40 blur-lg -z-0"></div>
               <h1 className="font-monoHead text-6xl md:text-7xl leading-tight text-white relative">
                 <span className="mr-2 text-lg block font-sans text-gray-300">ai + ui + web</span>
                 <span className="inline-block">hey, i&apos;m&nbsp;

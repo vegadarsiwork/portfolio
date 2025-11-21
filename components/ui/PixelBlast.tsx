@@ -188,7 +188,7 @@ const int SHAPE_CIRCLE   = 1;
 const int SHAPE_TRIANGLE = 2;
 const int SHAPE_DIAMOND  = 3;
 
-const int   MAX_CLICKS = 32;
+const int   MAX_CLICKS = 10;
 
 uniform vec2  uClickPos  [MAX_CLICKS];
 uniform float uClickTimes[MAX_CLICKS];
@@ -325,7 +325,7 @@ void main(){
 }
 `;
 
-const MAX_CLICKS = 32;
+const MAX_CLICKS = 10;
 
 const PixelBlast: React.FC<PixelBlastProps> = ({
   variant = 'square',
@@ -419,7 +419,6 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
       const renderer = new THREE.WebGLRenderer({
         canvas,
         antialias,
-        antialias: antialias,
         alpha: true,
         powerPreference: 'high-performance'
       });
@@ -535,21 +534,17 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
           h: renderer.domElement.height
         };
       };
-      const addClick = (x: number, y: number) => {
+      const onPointerDown = (e: PointerEvent) => {
+        const { fx, fy } = mapToPixels(e);
         const ix = threeRef.current?.clickIx ?? 0;
-        uniforms.uClickPos.value[ix].set(x, y);
+        uniforms.uClickPos.value[ix].set(fx, fy);
         uniforms.uClickTimes.value[ix] = uniforms.uTime.value;
         if (threeRef.current) threeRef.current.clickIx = (ix + 1) % MAX_CLICKS;
       };
-
-      const onPointerDown = (e: PointerEvent) => {
-        const { fx, fy } = mapToPixels(e);
-        addClick(fx, fy);
-      };
       const onPointerMove = (e: PointerEvent) => {
+        if (!touch) return;
         const { fx, fy, w, h } = mapToPixels(e);
-        if (touch) touch.addTouch({ x: fx / w, y: fy / h });
-        if (enableRipples) addClick(fx, fy);
+        touch.addTouch({ x: fx / w, y: fy / h });
       };
       renderer.domElement.addEventListener('pointerdown', onPointerDown, {
         passive: true

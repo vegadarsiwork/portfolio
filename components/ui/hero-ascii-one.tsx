@@ -60,7 +60,7 @@ export default function HeroAsciiOne(_: Props) {
         </div>
       </div>
 
-      <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
+      <div className="sticky top-0 flex h-[100svh] items-center">
         {/* Content container with parallax */}
         <div
           className="container relative z-20 mx-auto px-4 md:px-6"

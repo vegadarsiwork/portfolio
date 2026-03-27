@@ -21,8 +21,8 @@ function ProjectCard({
   const chipTone = index % 2 === 0
     ? 'border-accent-1/20 bg-accent-1/10 text-[#9fffee]'
     : 'border-accent-2/20 bg-accent-2/10 text-[#ffb8e0]';
-  const tilt = index % 2 === 0 ? '-rotate-[1.4deg]' : 'rotate-[1.4deg]';
-  const shift = index % 2 === 0 ? '-translate-x-[2px]' : 'translate-x-[2px]';
+  const tilt = index % 2 === 0 ? '-rotate-[3.5deg]' : 'rotate-[3.5deg]';
+  const shift = index % 2 === 0 ? '-translate-x-[8px]' : 'translate-x-[8px]';
 
   return (
     <article
@@ -65,7 +65,7 @@ function ProjectCard({
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-3 md:gap-4">
+        <div className="flex flex-wrap gap-3 md:gap-4" style={{ pointerEvents: 'auto' }}>
           {project.demo && (
             <a
               className="rounded-lg bg-gradient-to-r from-accent-1 to-accent-2 px-5 py-2.5 text-sm font-medium text-black transition hover:opacity-90 md:px-6 md:py-3"
@@ -102,13 +102,13 @@ export default function ProjectsGrid() {
       <div className="absolute inset-0 -z-10 bg-black" />
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-gradient-to-b from-accent-1/12 via-accent-2/6 to-transparent" />
 
-      <div className="container relative mx-auto px-4">
+      <div className="container relative mx-auto px-4" style={{ pointerEvents: 'none' }}>
         <div className="mb-12 py-5 md:mb-20 md:py-6">
           <h2 className="text-center font-monoHead text-3xl text-white md:text-4xl">featured projects</h2>
         </div>
 
         {/* Mobile: layered cards + tap-to-expand */}
-        <div className="mx-auto mb-8 max-w-6xl sm:hidden">
+        <div className="mx-auto mb-8 max-w-6xl sm:hidden" style={{ pointerEvents: 'auto' }}>
           <div className="mb-4 flex items-center justify-between px-2">
             <span className="font-monoHead text-xs text-white/60">projects</span>
             <span className="text-xs text-white/50">tap to focus and reveal details</span>
@@ -121,7 +121,7 @@ export default function ProjectsGrid() {
               return (
                 <div
                   key={project.id}
-                  className={`relative transition-all duration-300 ${index === 0 ? '' : '-mt-8'}`}
+                  className={`relative transition-all duration-300 ${index === 0 ? '' : '-mt-4'}`}
                   style={{ zIndex: isExpanded ? 50 : projects.length - index, pointerEvents: isExpanded ? 'auto' : 'none' }}
                 >
                   <ProjectCard
@@ -137,7 +137,7 @@ export default function ProjectsGrid() {
           </div>
         </div>
 
-        <div className="relative mx-auto max-w-6xl">
+        <div className="relative mx-auto max-w-6xl" style={{ pointerEvents: 'auto' }}>
           <div className="pointer-events-none absolute bottom-8 left-1/2 top-8 hidden w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-white/20 to-transparent md:block" />
 
           <div className="hidden space-y-7 sm:block md:space-y-10">

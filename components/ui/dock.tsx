@@ -21,9 +21,9 @@ import {
 } from 'react';
 import { cn } from '@/lib/utils';
 
-const DOCK_HEIGHT = 128;
-const DEFAULT_MAGNIFICATION = 80;
-const DEFAULT_DISTANCE = 150;
+const DOCK_HEIGHT = 80;
+const DEFAULT_MAGNIFICATION = 30;
+const DEFAULT_DISTANCE = 60;
 const DEFAULT_PANEL_HEIGHT = 64;
 
 type DockProps = {

@@ -108,7 +108,7 @@ export default function Skills() {
             const railSkills = skills.filter((skill) => skill.category === rail.category);
             const loopSkills = [...railSkills, ...railSkills];
             const isReverse = railIndex % 2 === 1;
-            const durationSeconds = 22 + railSkills.length * 2;
+            const durationSeconds = 28;
 
             return (
               <div key={rail.title} className="space-y-3">
@@ -117,19 +117,18 @@ export default function Skills() {
                   <span className="text-[11px] text-white/45">auto</span>
                 </div>
 
-                <div
-                  className="-mx-4 overflow-hidden px-4"
-                  onPointerDown={() => setPausedRail(railIndex)}
-                  onPointerUp={() => setPausedRail(null)}
-                  onPointerCancel={() => setPausedRail(null)}
-                  onPointerLeave={() => setPausedRail(null)}
-                >
+                <div className="relative w-full">
                   <div
                     className="flex w-max gap-3 pb-1"
                     style={{
                       animation: `${isReverse ? 'skills-rail-right' : 'skills-rail-left'} ${durationSeconds}s linear infinite`,
                       animationPlayState: pausedRail === railIndex ? 'paused' : 'running',
+                      animationDelay: '0s',
                     }}
+                    onPointerDown={() => setPausedRail(railIndex)}
+                    onPointerUp={() => setPausedRail(null)}
+                    onPointerCancel={() => setPausedRail(null)}
+                    onPointerLeave={() => setPausedRail(null)}
                   >
                     {loopSkills.map((skill, skillIndex) => {
                       const AccentIcon = skill.icon;

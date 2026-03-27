@@ -31,7 +31,7 @@ export default function CommandMenu() {
             {/* Trigger Button (Floating) */}
             <button
                 onClick={() => setOpen(true)}
-                className="fixed bottom-8 right-8 z-40 flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/10 rounded-full text-sm text-gray-400 hover:text-white hover:bg-white/20 transition-all shadow-xl"
+                className="fixed bottom-8 right-8 z-40 flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-sm text-gray-400 hover:bg-white/7 hover:text-gray-300 transition-colors shadow-lg"
             >
                 <span className="text-xs">⌘K</span>
             </button>

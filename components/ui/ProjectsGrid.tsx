@@ -98,7 +98,7 @@ export default function ProjectsGrid() {
   const [expandedId, setExpandedId] = useState<string | null>(projects[0]?.id ?? null);
 
   return (
-    <section id="projects" className="relative overflow-hidden pb-20 pt-20 md:pt-32">
+    <section id="projects" className="relative pb-20 pt-20 md:pt-32">
       <div className="absolute inset-0 -z-10 bg-black" />
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-gradient-to-b from-accent-1/12 via-accent-2/6 to-transparent" />
 
@@ -122,7 +122,7 @@ export default function ProjectsGrid() {
                 <div
                   key={project.id}
                   className={`relative transition-all duration-300 ${index === 0 ? '' : '-mt-8'}`}
-                  style={{ zIndex: isExpanded ? 50 : projects.length - index }}
+                  style={{ zIndex: isExpanded ? 50 : projects.length - index, pointerEvents: isExpanded ? 'auto' : 'none' }}
                 >
                   <ProjectCard
                     project={project}
@@ -148,6 +148,7 @@ export default function ProjectsGrid() {
                 <div
                   key={project.id}
                   className={`relative flex ${isLeft ? 'md:justify-start' : 'md:justify-end'}`}
+                  style={{ pointerEvents: 'auto' }}
                 >
                   <div className="absolute left-1/2 top-10 z-20 hidden h-3 w-3 -translate-x-1/2 rounded-full border border-white/20 bg-black md:block" />
                   <div className="w-full md:w-[46%]">

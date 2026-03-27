@@ -10,34 +10,33 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    id: 'cybersafe',
-    title: 'CyberSafe',
-    description: 'Privacy & cybersecurity learning platform — 1st place in Build a Static Website Hackathon.',
-    tech: ['HTML','CSS','JS'],
-    demo: 'https://cybersafe-niat.netlify.app/',
-    repo: 'https://github.com/vegadarsiwork/CyberSafe'
+    id: 'spice-express',
+    title: 'Spice Express Logistics',
+    description: 'A full-stack logistics platform with dynamic rate mapping algorithms to automate freight calculations and digitize lorry receipts.',
+    tech: ['React', 'Node.js', 'MongoDB', 'Tailwind'],
+    repo: 'https://github.com/vegadarsiwork/spiceexpress',
+    demo: 'https://spiceexpress.vercel.app'
   },
   {
-    id: 'income-estimation',
-    title: 'Income Estimation & Repayment Model',
-    description: 'ML model for income & repayment ability — Matrix Protocol AI Hackathon finalist.',
-    tech: ['Python','Colab'],
-    repo: 'https://github.com/vegadarsiwork/income_estimation_AIdea_submission'
+    id: 'rennowise',
+    title: 'Rennowise',
+    description: 'Construction oversight platform featuring a GPS-verified field audit system using MongoDB geospatial queries for secure contractor reporting.',
+    tech: ['TypeScript', 'Node.js', 'MongoDB', 'Railway'],
+    repo: 'https://github.com/vegadarsiwork/rennowise',
+    demo: 'https://rennowise.in'
   },
   {
-    id: 'slothclicks',
-    title: 'SlothClicks',
-    description: 'Neon reaction time tester with UX-focused feedback.',
-    tech: ['HTML','CSS','JS'],
-    demo: 'https://slothclicks.niat.tech/',
-    repo: 'https://github.com/vegadarsiwork/slothclicks'
+    id: 'klaro-ai',
+    title: 'Klaro AI',
+    description: 'Chrome Extension that injects an AI interface into YouTube to generate real-time video summaries and educational quizzes.',
+    tech: ['JavaScript', 'LLM APIs', 'DOM Manipulation'],
+    repo: 'https://github.com/vegadarsiwork/klaro'
   },
   {
-    id: 'tasty-kitchens',
-    title: 'Tasty Kitchens',
-    description: 'MERN full-stack Swiggy/Zomato clone with REST APIs and persistent cart.',
-    tech: ['MongoDB','Express','React','Node'],
-    repo: 'https://github.com/vegadarsiwork/tasty-kitchens',
-    demo: 'https://tasty-kitchens-react.netlify.app/'
+    id: 'bibleway-web-frontend',
+    title: 'BibleWay Web Frontend',
+    description: 'Frontend web experience focused on clean content delivery, performance, and intuitive navigation.',
+    tech: ['React', 'Express', 'Node.js', 'MongoDB'],
+    repo: 'https://github.com/vegadarsiwork/bibleway-web-frontend'
   }
 ];

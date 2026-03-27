@@ -54,9 +54,9 @@ export default function FloatingNav() {
             transition={{ duration: 0.3 }}
             className="fixed top-0 w-full z-50 bg-bg/80 backdrop-blur-sm border-b border-white/5"
           >
-            <div className="container mx-auto flex items-center justify-between py-5 px-4">
+            <div className="container mx-auto flex items-center justify-between px-4 py-3 sm:py-5">
               <div className="font-monoHead text-white text-lg">VEGA</div>
-              <nav className="text-sm text-gray-300 flex gap-6">
+              <nav className="hidden gap-4 text-sm text-gray-300 sm:flex md:gap-6">
                 {navItems.map((item) => (
                   <a
                     key={item.title}

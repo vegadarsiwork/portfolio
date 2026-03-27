@@ -3,8 +3,6 @@ import dynamic from 'next/dynamic';
 import FloatingNav from '@/components/ui/FloatingNav';
 import Footer from '@/components/ui/Footer';
 import CommandMenu from '@/components/ui/CommandMenu';
-import Spotify from '@/components/ui/Spotify';
-import SectionReveal from '@/components/ui/SectionReveal';
 
 const Hero = dynamic(() => import('@/components/ui/hero-ascii-one'), { ssr: false });
 import ProjectsGrid from '@/components/ui/ProjectsGrid';
@@ -14,10 +12,9 @@ import About from '@/components/ui/About';
 
 export default function DemoPage() {
   return (
-    <div className="relative bg-black">
+    <div className="relative overflow-x-hidden bg-black">
       <FloatingNav />
       <CommandMenu />
-      <Spotify />
 
       <Hero />
 

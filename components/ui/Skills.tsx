@@ -14,7 +14,7 @@ import {
 } from 'react-icons/si';
 import { FaCode } from 'react-icons/fa';
 import type { IconType } from 'react-icons';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Skill = {
   name: string;
@@ -88,18 +88,39 @@ const levelStyles: Record<string, string> = {
   Intermediate: 'border-amber-300/30 bg-amber-300/10 text-amber-200',
 };
 
-const accentBands = [
-  'from-accent-1/22 to-transparent',
-  'from-accent-2/18 to-transparent',
-  'from-amber-300/16 to-transparent',
-];
-
 export default function Skills() {
   const [pausedRail, setPausedRail] = useState<number | null>(null);
+  const railRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [railDurations, setRailDurations] = useState<number[]>([]);
+
+  useEffect(() => {
+    const SPEED_PX_PER_SEC = 28;
+
+    const updateDurations = () => {
+      const nextDurations = mobileRails.map((_, index) => {
+        const node = railRefs.current[index];
+        if (!node) {
+          return 28;
+        }
+
+        // One loop moves half the duplicated track width.
+        const loopDistance = node.scrollWidth / 2;
+        return Math.max(12, loopDistance / SPEED_PX_PER_SEC);
+      });
+
+      setRailDurations(nextDurations);
+    };
+
+    updateDurations();
+    window.addEventListener('resize', updateDurations);
+
+    return () => {
+      window.removeEventListener('resize', updateDurations);
+    };
+  }, []);
 
   return (
-    <section id="skills" className="relative overflow-hidden bg-black py-24 md:py-32">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-accent-1/10 via-accent-2/5 to-transparent" />
+    <section id="skills" className="relative overflow-hidden bg-black py-24 md:py-32 border-t border-white/10">
       <div className="container mx-auto px-4">
         <h2 className="mb-10 text-center font-monoHead text-3xl text-white md:mb-12 md:text-4xl">skills & expertise</h2>
 
@@ -108,7 +129,7 @@ export default function Skills() {
             const railSkills = skills.filter((skill) => skill.category === rail.category);
             const loopSkills = [...railSkills, ...railSkills];
             const isReverse = railIndex % 2 === 1;
-            const durationSeconds = 28;
+            const durationSeconds = railDurations[railIndex] ?? 28;
 
             return (
               <div key={rail.title} className="space-y-3">
@@ -119,12 +140,18 @@ export default function Skills() {
 
                 <div className="relative w-full">
                   <div
+                    ref={(node) => {
+                      railRefs.current[railIndex] = node;
+                    }}
                     className="flex w-max gap-3 pb-1"
                     style={{
-                      animation: `${isReverse ? 'skills-rail-right' : 'skills-rail-left'} ${durationSeconds}s linear infinite`,
+                      animationName: isReverse ? 'skills-rail-right' : 'skills-rail-left',
+                      animationDuration: `${durationSeconds}s`,
+                      animationTimingFunction: 'linear',
+                      animationIterationCount: 'infinite',
                       animationPlayState: pausedRail === railIndex ? 'paused' : 'running',
                       animationDelay: '0s',
-                    }}
+                    } as React.CSSProperties}
                     onPointerDown={() => setPausedRail(railIndex)}
                     onPointerUp={() => setPausedRail(null)}
                     onPointerCancel={() => setPausedRail(null)}
@@ -132,14 +159,12 @@ export default function Skills() {
                   >
                     {loopSkills.map((skill, skillIndex) => {
                       const AccentIcon = skill.icon;
-                      const accent = (railIndex + skillIndex) % 2 === 0 ? 'from-accent-1/18 to-transparent' : 'from-accent-2/14 to-transparent';
 
                       return (
                         <article
                           key={`${rail.title}-${skill.name}-${skillIndex}`}
                           className="group relative w-[78vw] max-w-[320px] overflow-hidden rounded-2xl border border-white/10 bg-[#111]/90 p-4 shadow-xl"
                         >
-                          <div className={`pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b ${accent}`} />
                           <div className="mb-3 flex items-center justify-between">
                             <AccentIcon className="text-xl text-white" />
                             <span className={`inline-block rounded-full border px-2.5 py-1 text-[11px] ${levelStyles[skill.level] ?? 'border-white/20 bg-white/10 text-gray-200'}`}>
@@ -171,8 +196,6 @@ export default function Skills() {
                 ${skill.size}
               `}
             >
-              <div className={`pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b ${accentBands[index % accentBands.length]}`} />
-
               {/* Icon */}
               <div className="mb-auto text-2xl text-white">
                 <skill.icon />

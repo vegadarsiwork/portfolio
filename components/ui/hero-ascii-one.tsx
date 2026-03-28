@@ -38,7 +38,7 @@ export default function HeroAsciiOne(_: Props) {
     : -scrollY * 0.5;
 
   return (
-    <main className="relative min-h-[100svh] bg-bg text-muted md:h-[130vh]">
+    <main className="relative min-h-[100svh] bg-bg text-muted md:h-[112vh]">
       {/* PixelBlast Interactive Background - Fixed to viewport, on top but allows clicks through */}
       <div className="fixed inset-0 z-10 pointer-events-none">
         <div className="h-full w-full pointer-events-none">

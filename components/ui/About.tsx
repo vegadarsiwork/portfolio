@@ -29,8 +29,8 @@ export default function About() {
     return (
         <section
             id="about"
-            className="relative z-10 pt-48 pb-32 overflow-hidden"
-            style={{ background: 'linear-gradient(to bottom, transparent, black 300px, black 100%)' }}
+            className="relative z-10 pt-24 pb-32 overflow-hidden md:pt-28"
+            style={{ background: 'linear-gradient(to bottom, transparent, black 220px, black 100%)' }}
         >
             {/* Background Gradient (Side) */}
             <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-white/[0.02] to-transparent pointer-events-none" />

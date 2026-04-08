@@ -1,122 +1,81 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Dock, DockIcon, DockItem, DockLabel } from '@/components/ui/dock';
-import { FolderKanban, Wrench, Mail } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { FolderKanban, Wrench, Mail, User } from 'lucide-react';
 
 const navItems = [
   {
+    title: 'about',
+    icon: <User className='h-4 w-4 text-neutral-300' />,
+    href: '#about',
+  },
+  {
     title: 'projects',
-    icon: <FolderKanban className='h-full w-full text-neutral-300' />,
+    icon: <FolderKanban className='h-4 w-4 text-neutral-300' />,
     href: '#projects',
   },
   {
     title: 'skills',
-    icon: <Wrench className='h-full w-full text-neutral-300' />,
+    icon: <Wrench className='h-4 w-4 text-neutral-300' />,
     href: '#skills',
   },
   {
     title: 'contact',
-    icon: <Mail className='h-full w-full text-neutral-300' />,
+    icon: <Mail className='h-4 w-4 text-neutral-300' />,
     href: '#contact',
   },
 ];
 
 export default function FloatingNav() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [istTime, setIstTime] = useState('');
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+    const formatIst = () => {
+      const time = new Intl.DateTimeFormat('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+      }).format(new Date());
 
-      // Check if projects section is at the top of viewport
-      const projectsSection = document.querySelector('#projects');
-      if (projectsSection) {
-        const rect = projectsSection.getBoundingClientRect();
-        // Show overlay when projects section touches the top (within 100px threshold)
-        setShowOverlay(rect.top <= 0 && rect.bottom > 0);
-      }
+      setIstTime(time);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    formatIst();
+    const intervalId = setInterval(formatIst, 30000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
-    <>
-      {/* Top Navbar - visible when not scrolled */}
-      <AnimatePresence>
-        {!isScrolled && (
-          <motion.header
-            initial={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed top-0 w-full z-50 bg-bg/80 backdrop-blur-sm border-b border-white/5"
+    <header className="fixed top-0 z-50 w-full border-b border-white/10 bg-black/70 backdrop-blur-md">
+      <div className="container mx-auto flex items-center justify-between px-4 py-3 sm:py-4">
+        <div className="flex items-center gap-3">
+          <a
+            href="#about"
+            aria-label="Open about section"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 font-monoHead text-[11px] text-white/90 transition-colors hover:bg-white/10 hover:text-white"
           >
-            <div className="container mx-auto flex items-center justify-between py-5 px-4">
-              <div className="font-monoHead text-white text-lg">VEGA</div>
-              <nav className="text-sm text-gray-300 flex gap-6">
-                {navItems.map((item) => (
-                  <a
-                    key={item.title}
-                    href={item.href}
-                    className="hover:text-white transition-colors"
-                  >
-                    {item.title}
-                  </a>
-                ))}
-              </nav>
-            </div>
-          </motion.header>
-        )}
-      </AnimatePresence>
+            VD
+          </a>
+          <div className="hidden rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-white/60 sm:block">
+            IST {istTime || '--:--'}
+          </div>
+        </div>
 
-      {/* Floating Dock - visible when scrolled */}
-      <AnimatePresence>
-        {isScrolled && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ duration: 0.4, type: 'spring', stiffness: 200, damping: 25 }}
-            className="fixed top-0 left-0 right-0 z-50"
-          >
-            {/* Black overlay above dock - only when projects section is visible */}
-            {showOverlay && <div className="h-4 bg-black" />}
-
-            {/* Dock centered - consistent padding */}
-            <div className={`flex justify-center pt-1 ${showOverlay ? 'bg-black' : 'pt-5'}`}>
-              <Dock className="items-end pb-3 bg-[#070707]/95 backdrop-blur-md border border-white/10">
-                <DockItem className="aspect-square rounded-full bg-white/5 hover:bg-white/10 transition-colors">
-                  <DockLabel>home</DockLabel>
-                  <DockIcon>
-                    <a href="#" className="w-full h-full flex items-center justify-center">
-                      <div className="font-monoHead text-white text-sm">V</div>
-                    </a>
-                  </DockIcon>
-                </DockItem>
-                {navItems.map((item, idx) => (
-                  <DockItem
-                    key={idx}
-                    className="aspect-square rounded-full bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <DockLabel>{item.title}</DockLabel>
-                    <DockIcon>
-                      <a href={item.href} className="w-full h-full flex items-center justify-center">
-                        {item.icon}
-                      </a>
-                    </DockIcon>
-                  </DockItem>
-                ))}
-              </Dock>
-            </div>
-
-            {/* Black overlay below dock - only when projects section is visible */}
-            {showOverlay && <div className="h-6 bg-black" />}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+        <nav className="flex items-center gap-2 text-sm text-gray-300 sm:gap-4 md:gap-6">
+          {navItems.map((item) => (
+            <a
+              key={item.title}
+              href={item.href}
+              aria-label={item.title}
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 transition-colors hover:bg-white/10 hover:text-white sm:rounded-none sm:border-none sm:bg-transparent sm:px-0 sm:py-0"
+            >
+              {item.icon}
+              <span className="hidden sm:inline">{item.title}</span>
+            </a>
+          ))}
+        </nav>
+      </div>
+    </header>
   );
 }

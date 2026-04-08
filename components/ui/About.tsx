@@ -1,22 +1,26 @@
-import { motion } from 'framer-motion';
-
 const timeline = [
     {
         year: 'Now',
-        title: 'Freelance Developer',
-        desc: 'Building high-performance web experiences for startups and creators.',
+        title: 'Full Stack Game Dev Intern',
+        desc: 'Developing immersive digital experiences at Linchpin Soft Solutions.',
         current: true
     },
     {
-        year: '2023',
-        title: 'Frontend Intern',
-        desc: 'Contributed to design systems and UI component libraries.',
+        year: '2024-2028',
+        title: 'B.Tech CSE at NIAT',
+        desc: 'Currently pursuing B.Tech CSE with an 8.1 CGPA while specializing in AI and web development.',
         current: false
     },
     {
-        year: '2021',
-        title: 'Started Coding',
-        desc: 'Hello World. Fell in love with the web.',
+        year: '2024',
+        title: 'Freelance & Hackathons',
+        desc: 'Deployed 5+ full-stack apps and reached finals in major AI hackathons.',
+        current: false
+    },
+    {
+        year: '2020-24',
+        title: 'IB Diploma',
+        desc: 'Studied CS and Physics at Aga Khan Academy and led the school robotics team.',
         current: false
     }
 ];
@@ -25,8 +29,8 @@ export default function About() {
     return (
         <section
             id="about"
-            className="relative z-10 pt-48 pb-32 overflow-hidden"
-            style={{ background: 'linear-gradient(to bottom, transparent, black 300px, black 100%)' }}
+            className="relative z-10 pt-24 pb-32 overflow-hidden md:pt-28"
+            style={{ background: 'linear-gradient(to bottom, transparent, black 220px, black 100%)' }}
         >
             {/* Background Gradient (Side) */}
             <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-white/[0.02] to-transparent pointer-events-none" />
@@ -38,12 +42,12 @@ export default function About() {
                     <h2 className="font-monoHead text-4xl text-white mb-8">about me</h2>
                     <div className="prose prose-invert text-gray-300 leading-relaxed">
                         <p className="text-lg mb-6">
-                            I'm a creative developer who loves the intersection of design and code.
-                            I don't just build websites; I craft digital experiences that feel alive.
+                            I am a second-year CSE student at NIAT with an 8.1 CGPA, currently pushing the boundaries of interactive experiences as a Full Stack Game Dev Intern at Linchpin Soft Solutions.
+                            I specialize in building AI-powered web applications and high-performance digital tools.
                         </p>
                         <p className="mb-6">
-                            When I'm not coding, I'm probably exploring new AI tools,
-                            tweaking my neovim config, or listening to synthwave.
+                            My journey ranges from leading robotics teams to the FLL National Championships to founding chess clubs and winning hackathons.
+                            I thrive on rapid prototyping and turning complex problems into clean, functional code.
                         </p>
                     </div>
 

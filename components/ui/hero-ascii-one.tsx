@@ -38,10 +38,10 @@ export default function HeroAsciiOne(_: Props) {
     : -scrollY * 0.5;
 
   return (
-    <main className="relative h-[130vh] bg-bg text-muted">
+    <main className="relative min-h-[100svh] bg-bg text-muted md:h-[112vh]">
       {/* PixelBlast Interactive Background - Fixed to viewport, on top but allows clicks through */}
       <div className="fixed inset-0 z-10 pointer-events-none">
-        <div className="w-full h-full pointer-events-auto">
+        <div className="h-full w-full pointer-events-none">
           <PixelBlast
             variant="circle"
             pixelSize={6}
@@ -60,10 +60,10 @@ export default function HeroAsciiOne(_: Props) {
         </div>
       </div>
 
-      <div className="sticky top-0 h-screen flex items-center overflow-hidden">
+      <div className="sticky top-0 flex h-[100svh] items-center">
         {/* Content container with parallax */}
         <div
-          className="container mx-auto px-4 relative z-20"
+          className="container relative z-20 mx-auto px-4 md:px-6"
           style={{
             transform: `translateY(${parallaxOffset}px)`,
             transition: 'transform 0.05s ease-out'
@@ -79,10 +79,10 @@ export default function HeroAsciiOne(_: Props) {
             {/* Title with subtle dark halo */}
             <div className="relative">
               <div className="absolute -inset-3 bg-black/40 blur-lg -z-0"></div>
-              <h1 className="font-monoHead text-6xl md:text-7xl leading-tight text-white relative">
-                <span className="mr-2 text-lg block font-sans text-gray-300">ai + ui + web</span>
+              <h1 className="relative font-monoHead text-4xl leading-tight text-white sm:text-5xl md:text-7xl">
+                <span className="mr-2 block font-sans text-sm text-gray-300 sm:text-base md:text-lg">ai + ui + web</span>
                 <span className="inline-block">hey, i&apos;m&nbsp;
-                  <span id="hero-name" className="text-6xl md:text-7xl font-monoHead">vega!</span>
+                  <span id="hero-name" className="font-monoHead text-4xl sm:text-5xl md:text-7xl">vega!</span>
                 </span>
               </h1>
             </div>
@@ -90,13 +90,13 @@ export default function HeroAsciiOne(_: Props) {
             {/* Description with subtle backdrop */}
             <div className="relative mt-6">
               <div className="absolute -inset-2 bg-black/35 blur-md -z-10"></div>
-              <p className="text-lg text-gray-300 max-w-2xl relative">
+              <p className="relative max-w-2xl text-base text-gray-300 sm:text-lg">
                 i build things that feel simple and work fast — interfaces, prototypes, and small AI experiments.
               </p>
             </div>
 
             {/* Buttons with dark halos */}
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <div className="relative">
                 <div className="absolute -inset-1 bg-black/40 blur-md rounded-lg -z-10"></div>
                 <a href="#projects" className="px-4 py-2 rounded-md bg-gradient-to-r from-accent-1 to-accent-2 text-black font-medium relative">view work</a>

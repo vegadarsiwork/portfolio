@@ -22,7 +22,26 @@
   --color-muted: #e6e6e6;
   --color-accent-1: #00ffd5;
   --color-accent-2: #ff2d9c;
-  
+
+  /* v2 — Twilight CRT palette (used by /v2 redesign) */
+  --color-v2-bg: #07070a;
+  --color-v2-surface: #11132a;
+  --color-v2-surface-2: #181a36;
+  --color-v2-text: #f5e9d8;
+  --color-v2-muted: #8a7da0;
+  --color-v2-blue: #4361ee;
+  --color-v2-purple: #7209b7;
+  --color-v2-orange: #ff8c42;
+
+  /* v2 — Doto dot-matrix as primary pixel + Geist body (used in /v2) */
+  --font-family-pixel-v2: 'Doto', 'DotGothic16', 'Silkscreen', monospace;
+  --font-family-body-v2: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-family-terminal-v2: 'VT323', ui-monospace, monospace;
+  /* Hero wordmark gets a different pixel feel for visual contrast */
+  --font-family-hero-v2: 'DotGothic16', 'Doto', 'Silkscreen', monospace;
+  /* Footer keeps Doto explicitly (matches rest of site now) */
+  --font-family-footer-v2: 'Doto', 'DotGothic16', monospace;
+
   /* Custom Font Families */
   --font-family-mono-head: 'Silkscreen', monospace;
   --font-family-body: 'Aeonik', ui-sans-serif, system-ui, sans-serif;
@@ -37,6 +56,64 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+/* v2 — Time-of-day slider with day/night gradient track */
+.v2-time-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 10px;
+  border-radius: 0;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    #06070f 0%,
+    #0a0a22 8%,
+    #1a1233 18%,
+    #265290 30%,
+    #246dbe 45%,
+    #5491c8 55%,
+    #ec7040 70%,
+    #b8423d 78%,
+    #4a1d5e 86%,
+    #1a113b 92%,
+    #06070f 100%
+  );
+  border: 1px solid rgba(138, 125, 160, 0.4);
+}
+
+.v2-time-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 6px;
+  height: 18px;
+  background: var(--color-v2-text, #f5e9d8);
+  border: 1px solid var(--color-v2-orange, #ff8c42);
+  cursor: grab;
+  box-shadow: 0 0 10px rgba(255, 140, 66, 0.6);
+}
+
+.v2-time-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+.v2-time-slider::-moz-range-thumb {
+  width: 6px;
+  height: 18px;
+  background: var(--color-v2-text, #f5e9d8);
+  border: 1px solid var(--color-v2-orange, #ff8c42);
+  border-radius: 0;
+  cursor: grab;
+  box-shadow: 0 0 10px rgba(255, 140, 66, 0.6);
+}
+
+.v2-time-slider:focus {
+  outline: none;
+}
+
+.v2-time-slider:focus-visible {
+  outline: 1px solid var(--color-v2-orange, #ff8c42);
+  outline-offset: 2px;
 }
 
 html, body, #root, #__next {

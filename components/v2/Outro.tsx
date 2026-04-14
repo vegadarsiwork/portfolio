@@ -29,7 +29,7 @@ export default function Outro() {
           style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
         >
           <span className="h-px w-12 bg-[var(--color-v2-muted)]/30" />
-          <span className="text-[var(--color-v2-orange)] text-xs tracking-[0.25em]">§ VI</span>
+          <span className="text-[var(--color-v2-orange)] text-xs tracking-[0.25em]">§ VII</span>
           <span className="text-[10px] tracking-[0.3em] text-[var(--color-v2-muted)]">OUTRO</span>
           <span className="h-px w-12 bg-[var(--color-v2-muted)]/30" />
         </motion.div>
@@ -42,7 +42,7 @@ export default function Outro() {
           className="text-[clamp(40px,9vw,140px)] leading-[0.9] tracking-tight text-[var(--color-v2-text)] mb-10"
           style={{
             fontFamily: 'var(--font-family-footer-v2)',
-            fontWeight: 400,
+            fontWeight: 500,
             textShadow: '0 0 30px color-mix(in srgb, var(--color-v2-orange) 35%, transparent), 0 0 60px color-mix(in srgb, var(--color-v2-orange) 20%, transparent)',
           }}
         >

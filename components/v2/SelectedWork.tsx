@@ -3,21 +3,22 @@
 import { chapters } from '@/data/v2-chapters';
 import ProjectChapter from './ProjectChapter';
 import Section from './Section';
+import StaggerWords from './StaggerWords';
 
 export default function SelectedWork() {
   return (
     <div id="work">
       <Section marker="§ II" label="SELECTED WORK">
         <div className="text-center">
-          <h2
+          <StaggerWords
             className="text-4xl md:text-6xl lg:text-7xl leading-[0.95] tracking-tight text-[var(--color-v2-text)] mb-6 max-w-3xl mx-auto"
             style={{
-              fontFamily: 'var(--font-family-pixel-v2)',
-              fontWeight: 400,
+              fontFamily: 'var(--font-family-display-v2)',
+              fontWeight: 500,
             }}
           >
             FOUR THINGS I MADE WHILE FIGURING IT OUT.
-          </h2>
+          </StaggerWords>
           <p className="text-base md:text-lg text-[var(--color-v2-text)]/70 max-w-2xl mx-auto">
             Read these as chapters, not as a portfolio grid. Each one taught me something I
             couldn&apos;t have learned by reading about it.

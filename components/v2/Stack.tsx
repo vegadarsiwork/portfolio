@@ -3,6 +3,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import Section from './Section';
+import StaggerWords from './StaggerWords';
 
 interface StackRow {
   label: string;
@@ -41,12 +42,12 @@ export default function Stack() {
   return (
     <Section id="stack" marker="§ III" label="STACK" width="normal">
       <div ref={ref} className="text-center">
-        <h2
+        <StaggerWords
           className="text-4xl md:text-6xl lg:text-7xl tracking-tight text-[var(--color-v2-text)] mb-5"
-          style={{ fontFamily: 'var(--font-family-pixel-v2)', fontWeight: 400 }}
+          style={{ fontFamily: 'var(--font-family-display-v2)', fontWeight: 500 }}
         >
           THE STACK.
-        </h2>
+        </StaggerWords>
         <p className="text-base md:text-lg text-[var(--color-v2-text)]/70 max-w-2xl mx-auto mb-12">
           Every tool I reach for without thinking, dumped from my dotfiles.
         </p>

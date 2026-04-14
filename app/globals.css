@@ -33,13 +33,14 @@
   --color-v2-purple: #7209b7;
   --color-v2-orange: #ff8c42;
 
-  /* v2 — Doto dot-matrix as primary pixel + Geist body (used in /v2) */
-  --font-family-pixel-v2: 'Doto', 'DotGothic16', 'Silkscreen', monospace;
+  /* v2 — use a denser pixel face for small UI copy; Doto stays for larger display moments */
+  --font-family-pixel-v2: 'DotGothic16', 'Silkscreen', 'Doto', monospace;
   --font-family-body-v2: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-family-terminal-v2: 'VT323', ui-monospace, monospace;
-  /* Hero wordmark gets a different pixel feel for visual contrast */
-  --font-family-hero-v2: 'DotGothic16', 'Doto', 'Silkscreen', monospace;
-  /* Footer keeps Doto explicitly (matches rest of site now) */
+  /* Hero wordmark + small UI use the denser pixel face (DotGothic16) for readability.
+     Section/chapter display headings use Doto for the airier dot-matrix feel. */
+  --font-family-hero-v2: 'DotGothic16', 'Silkscreen', monospace;
+  --font-family-display-v2: 'Doto', 'DotGothic16', 'Silkscreen', monospace;
   --font-family-footer-v2: 'Doto', 'DotGothic16', monospace;
 
   /* Custom Font Families */
@@ -54,8 +55,29 @@
   --accent-2: #ff2d9c;
 }
 
-html {
-  scroll-behavior: smooth;
+/* Lenis smooth scroll — required CSS so Lenis can hijack the scroll
+   without fighting the browser's native scroll-behavior. Removing the
+   scroll-behavior: smooth that was here previously fixed Lenis being
+   stuck (native + JS smooth scroll were conflicting). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 /* v2 — Time-of-day slider with day/night gradient track */

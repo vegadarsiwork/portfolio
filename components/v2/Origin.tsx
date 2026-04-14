@@ -3,12 +3,13 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import Section from './Section';
+import StaggerWords from './StaggerWords';
 
 const callouts = [
-  { label: 'CURRENTLY', value: 'STUDENT BUILDER' },
+  { label: 'CURRENTLY', value: 'GAME DEV INTERN · LINCHPIN' },
+  { label: 'STUDYING', value: 'B.TECH CSE · NIAT · 8.1 CGPA' },
   { label: 'BASED IN', value: 'INDIA' },
-  { label: 'STARTED', value: '2021' },
-  { label: 'STACK', value: 'TS · PY · ML' },
+  { label: 'STACK', value: 'TS · MERN · PY · ML' },
 ];
 
 export default function Origin() {
@@ -20,30 +21,31 @@ export default function Origin() {
       <div ref={ref} className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
         {/* Story column */}
         <div className="lg:col-span-8 space-y-6 text-[var(--color-v2-text)]/90">
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.05 }}
+          <StaggerWords
+            as="p"
+            stagger={0.12}
             className="text-2xl md:text-4xl leading-tight text-[var(--color-v2-text)]"
             style={{
-              fontFamily: 'var(--font-family-pixel-v2)',
+              fontFamily: 'var(--font-family-display-v2)',
+              fontWeight: 500,
               textShadow: '0 0 24px color-mix(in srgb, var(--color-v2-orange) 25%, transparent)',
             }}
           >
             I started by accident.
-          </motion.p>
+          </StaggerWords>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.7, delay: 0.15 }}
             className="text-base md:text-lg leading-relaxed max-w-2xl"
           >
-            I opened a code editor for a school assignment in 2021 and didn&apos;t close it for the
-            next three years. Somewhere between the first <em>Hello World</em> and a hackathon
-            trophy I stopped thinking of myself as{' '}
-            <span className="text-[var(--color-v2-muted)]">someone who codes</span> and started
-            thinking of myself as someone who{' '}
-            <span className="text-[var(--color-v2-orange)]">builds things</span>.
+            I&apos;m a second-year CSE student at{' '}
+            <span className="text-[var(--color-v2-text)]">NIAT</span> (8.1 CGPA), currently
+            a <span className="text-[var(--color-v2-orange)]">Full Stack Game Dev Intern</span> at
+            Linchpin Soft Solutions. I build AI-powered web apps and high-performance digital tools
+            — somewhere between{' '}
+            <span className="text-[var(--color-v2-muted)]">someone who codes</span> and someone who{' '}
+            <span className="text-[var(--color-v2-orange)]">ships things</span>.
           </motion.p>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -51,9 +53,11 @@ export default function Origin() {
             transition={{ duration: 0.7, delay: 0.25 }}
             className="text-base md:text-lg leading-relaxed max-w-2xl"
           >
-            Today I sit in the gap between design and engineering — close enough to ML to train a
-            model, close enough to a Figma file to know why a button feels wrong. I&apos;m a
-            student. I don&apos;t have all the answers yet. That&apos;s also the point.
+            Before all this I led my school&apos;s robotics team to the FLL National Championships,
+            founded a chess club, and studied CS and Physics through the IB Diploma at Aga Khan
+            Academy. In 2024 I went deep on hackathons and freelance work — shipped five+ full-stack
+            apps and reached the finals of a couple of AI hackathons that taught me what I still
+            don&apos;t know.
           </motion.p>
           <motion.p
             initial={{ opacity: 0, y: 12 }}

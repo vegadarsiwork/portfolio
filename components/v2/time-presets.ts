@@ -1,7 +1,7 @@
 // Time-of-day presets for the hero pixel scene.
-// Each preset defines the SKY only — sun and moon position/visuals are
-// computed from `hour` directly inside PixelScene (Minecraft-style arc),
-// so the celestial bodies move predictably and never zigzag.
+// Each preset stores a 16-color sky gradient (top → horizon) as a plain
+// string array. Y positions are stored separately as ratios of the horizon,
+// so the same colors can be drawn at any canvas height.
 
 export type TimeOfDay =
   | 'dawn'
@@ -14,43 +14,46 @@ export type TimeOfDay =
 
 export interface TimePreset {
   label: string;
-  skyBands: { yEnd: number; color: string }[];
+  /** 16 colors from top of sky to horizon */
+  skyColors: string[];
   groundColor: string;
   cloudColors: string[];
   /** Accent color the page uses for highlighted text in this lighting. */
   accentColor: string;
 }
 
-const Y = [8, 22, 36, 52, 68, 84, 100, 114, 128, 140, 152, 162, 170, 178, 185, 190];
-
-function bands(colors: string[]): { yEnd: number; color: string }[] {
-  return Y.map((yEnd, i) => ({ yEnd, color: colors[i] ?? colors[colors.length - 1] }));
-}
+/**
+ * Sky band Y positions as ratios of HORIZON (0 = top of canvas, 1 = horizon).
+ * 16 bands. Drawing code multiplies by the current HORIZON pixel value.
+ */
+export const Y_RATIOS = [
+  0.042, 0.116, 0.189, 0.274, 0.358, 0.442, 0.526, 0.600,
+  0.674, 0.737, 0.800, 0.853, 0.895, 0.937, 0.974, 1.000,
+];
 
 export const TIME_PRESETS: Record<TimeOfDay, TimePreset> = {
   night: {
     label: 'NIGHT',
-    skyBands: bands([
+    skyColors: [
       '#020206', '#030309', '#04040c', '#050510',
       '#060614', '#070718', '#08081c', '#09091f',
       '#0a0a22', '#0b0a24', '#0c0b26', '#0c0c27',
       '#0d0c28', '#0e0d29', '#0f0d2a', '#100e2b',
-    ]),
+    ],
     groundColor: '#010105',
     cloudColors: ['#0a0618', '#0e0922', '#13102a', '#180f2e'],
-    // Cool moonlight — distinct from the warm cream text so the
-    // accent glow doesn't merge into the text at night
+    // Cool moonlight — distinct from the warm cream text
     accentColor: '#b8c8e8',
   },
 
   dawn: {
     label: 'DAWN',
-    skyBands: bands([
+    skyColors: [
       '#0d0a20', '#1a1232', '#261a3e', '#362149',
       '#462852', '#572e56', '#6d3650', '#823e48',
       '#984837', '#ae552a', '#c36328', '#d5722a',
       '#e58333', '#ee9442', '#f1a55a', '#f3b878',
-    ]),
+    ],
     groundColor: '#0c0818',
     cloudColors: ['#2d1a3a', '#3e2340', '#523042', '#68403e'],
     accentColor: '#ff8870',
@@ -58,12 +61,12 @@ export const TIME_PRESETS: Record<TimeOfDay, TimePreset> = {
 
   morning: {
     label: 'MORNING',
-    skyBands: bands([
+    skyColors: [
       '#1e4884', '#265290', '#2f5d9c', '#3867a7',
       '#4171b1', '#4a7bba', '#5484c1', '#5e8cc7',
       '#6993cc', '#749ad0', '#7fa0d3', '#8aa6d6',
       '#95acd7', '#9fb1d8', '#a9b5d8', '#b3b9d7',
-    ]),
+    ],
     groundColor: '#0d1a2a',
     cloudColors: ['#c9d9e8', '#b8cbe0', '#a7bdd8', '#95afcf'],
     accentColor: '#6bb5ff',
@@ -71,12 +74,12 @@ export const TIME_PRESETS: Record<TimeOfDay, TimePreset> = {
 
   noon: {
     label: 'NOON',
-    skyBands: bands([
+    skyColors: [
       '#1c63b5', '#246dbe', '#2d78c7', '#3882ce',
       '#448cd4', '#5196d9', '#5e9fdd', '#6ca8e0',
       '#7ab1e3', '#89b8e5', '#97c0e7', '#a5c6e7',
       '#b3cce7', '#c1d1e7', '#cdd5e5', '#d6d8e3',
-    ]),
+    ],
     groundColor: '#112138',
     cloudColors: ['#dce8f2', '#cedbe9', '#bccde0', '#a9bfd6'],
     accentColor: '#5cb0ff',
@@ -84,12 +87,12 @@ export const TIME_PRESETS: Record<TimeOfDay, TimePreset> = {
 
   afternoon: {
     label: 'AFTERNOON',
-    skyBands: bands([
+    skyColors: [
       '#1b3f72', '#245287', '#2f6297', '#3c72a6',
       '#4b82b2', '#5d8ebb', '#6f99c0', '#81a0c2',
       '#94a6c0', '#a8a9ba', '#bbabb0', '#cca89f',
       '#daa08a', '#e49271', '#ea8257', '#ec7040',
-    ]),
+    ],
     groundColor: '#0e1b2c',
     cloudColors: ['#d8ac8a', '#c89874', '#b78360', '#a36f4f'],
     accentColor: '#ffaa55',
@@ -97,12 +100,12 @@ export const TIME_PRESETS: Record<TimeOfDay, TimePreset> = {
 
   golden: {
     label: 'GOLDEN HOUR',
-    skyBands: bands([
+    skyColors: [
       '#050510', '#07071a', '#0b0a25', '#110c33',
       '#180f3f', '#21134a', '#2c1754', '#3a1c5a',
       '#4e2258', '#652852', '#7d2e48', '#99363c',
       '#ba4530', '#dc5a2a', '#ff7c30', '#ffb061',
-    ]),
+    ],
     groundColor: '#030308',
     cloudColors: ['#1a0d2d', '#2c123f', '#3d1842', '#56213f'],
     accentColor: '#ff8c42',
@@ -110,12 +113,12 @@ export const TIME_PRESETS: Record<TimeOfDay, TimePreset> = {
 
   dusk: {
     label: 'DUSK',
-    skyBands: bands([
+    skyColors: [
       '#030308', '#060616', '#0a0820', '#0e0b29',
       '#140e32', '#1a113b', '#211542', '#291944',
       '#321c44', '#3c2040', '#46233a', '#512631',
       '#5c2827', '#682a1d', '#7a2e17', '#8a3412',
-    ]),
+    ],
     groundColor: '#020206',
     cloudColors: ['#0e0a1a', '#15102a', '#1c1435', '#251838'],
     accentColor: '#b06ab3',
@@ -166,18 +169,7 @@ export function lerpHex(a: string, b: string, t: number): string {
   return rgbToHex(lerp(r1, r2, t), lerp(g1, g2, t), lerp(b1, b2, t));
 }
 
-function lerpBands(
-  a: TimePreset['skyBands'],
-  b: TimePreset['skyBands'],
-  t: number,
-): TimePreset['skyBands'] {
-  return a.map((band, i) => ({
-    yEnd: band.yEnd,
-    color: lerpHex(band.color, b[i]?.color ?? band.color, t),
-  }));
-}
-
-function lerpClouds(a: string[], b: string[], t: number): string[] {
+function lerpColors(a: string[], b: string[], t: number): string[] {
   return a.map((c, i) => lerpHex(c, b[i] ?? c, t));
 }
 
@@ -195,14 +187,13 @@ export function getInterpolatedPreset(hour: number): TimePreset {
 
   const span = b.hour - a.hour;
   const t = span <= 0 ? 0 : (h - a.hour) / span;
-  // Smoothstep easing
   const ts = t * t * (3 - 2 * t);
 
   return {
     label: t < 0.5 ? a.preset.label : b.preset.label,
-    skyBands: lerpBands(a.preset.skyBands, b.preset.skyBands, ts),
+    skyColors: lerpColors(a.preset.skyColors, b.preset.skyColors, ts),
     groundColor: lerpHex(a.preset.groundColor, b.preset.groundColor, ts),
-    cloudColors: lerpClouds(a.preset.cloudColors, b.preset.cloudColors, ts),
+    cloudColors: lerpColors(a.preset.cloudColors, b.preset.cloudColors, ts),
     accentColor: lerpHex(a.preset.accentColor, b.preset.accentColor, ts),
   };
 }
@@ -215,4 +206,21 @@ export function getTimeOfDay(hour: number): TimeOfDay {
   if (hour >= 17 && hour < 19) return 'golden';
   if (hour >= 19 && hour < 20) return 'dusk';
   return 'night';
+}
+
+/**
+ * Real lunar phase for a given date. Returns 0..1 where:
+ *   0    = new moon
+ *   0.25 = first quarter (right half lit)
+ *   0.5  = full moon
+ *   0.75 = last quarter (left half lit)
+ * Synodic period = 29.530588853 days, reference new moon: 2000-01-06 18:14 UTC.
+ */
+export function getMoonPhase(date: Date = new Date()): number {
+  const synodic = 29.530588853;
+  const refNewUtc = Date.UTC(2000, 0, 6, 18, 14, 0);
+  const days = (date.getTime() - refNewUtc) / 86_400_000;
+  let phase = (days % synodic) / synodic;
+  if (phase < 0) phase += 1;
+  return phase;
 }

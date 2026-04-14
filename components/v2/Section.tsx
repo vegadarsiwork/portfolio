@@ -37,7 +37,7 @@ export default function Section({
     <section
       id={id}
       ref={ref}
-      className={`relative py-32 md:py-40 px-6 md:px-12 ${className}`}
+      className={`relative py-20 md:py-40 px-5 md:px-12 ${className}`}
     >
       <div className={`${WIDTH_CLASS[width]} mx-auto`}>
         {(marker || label) && (

@@ -3,6 +3,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import type { Chapter } from '@/data/v2-chapters';
+import StaggerWords from './StaggerWords';
 
 interface Props {
   chapter: Chapter;
@@ -19,7 +20,7 @@ export default function ProjectChapter({ chapter }: Props) {
   return (
     <article
       ref={ref}
-      className="relative px-6 md:px-12 py-20 md:py-28 border-t border-[var(--color-v2-muted)]/15"
+      className="relative px-5 md:px-12 py-16 md:py-28 border-t border-[var(--color-v2-muted)]/15"
     >
       <div className="max-w-3xl mx-auto text-center">
         {/* Numeral + label */}
@@ -28,15 +29,18 @@ export default function ProjectChapter({ chapter }: Props) {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.05 }}
           className="inline-flex items-baseline gap-4 mb-4"
-          style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
         >
-          <span className="text-[var(--color-v2-orange)] text-xs md:text-sm tracking-[0.25em]">
+          <span
+            className="text-[var(--color-v2-orange)] text-xs md:text-sm tracking-[0.25em]"
+            style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
+          >
             PROJECT
           </span>
           <span
-            className="text-[var(--color-v2-orange)] text-5xl md:text-7xl leading-none"
+            className="text-[var(--color-v2-orange)] text-4xl sm:text-5xl md:text-7xl leading-none"
             style={{
-              fontWeight: 400,
+              fontFamily: 'var(--font-family-display-v2)',
+              fontWeight: 500,
               textShadow: '0 0 24px color-mix(in srgb, var(--color-v2-orange) 45%, transparent)',
             }}
           >
@@ -45,19 +49,19 @@ export default function ProjectChapter({ chapter }: Props) {
         </motion.div>
 
         {/* Title */}
-        <motion.h3
-          initial={{ opacity: 0, y: 12 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, delay: 0.12 }}
-          className="text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight text-[var(--color-v2-text)] mb-5"
+        <StaggerWords
+          as="h3"
+          delay={0.15}
+          stagger={0.1}
+          className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight text-[var(--color-v2-text)] mb-5 break-words"
           style={{
-            fontFamily: 'var(--font-family-pixel-v2)',
+            fontFamily: 'var(--font-family-display-v2)',
             fontWeight: 400,
             textShadow: '0 0 20px color-mix(in srgb, var(--color-v2-orange) 25%, transparent), 0 0 40px color-mix(in srgb, var(--color-v2-orange) 15%, transparent)',
           }}
         >
           {chapter.title}
-        </motion.h3>
+        </StaggerWords>
 
         {/* Metaphor */}
         <motion.p
@@ -183,8 +187,8 @@ function ChapterVisual({ chapter }: { chapter: Chapter }) {
         <div
           className="text-3xl md:text-5xl tracking-tight text-[var(--color-v2-text)]"
           style={{
-            fontFamily: 'var(--font-family-pixel-v2)',
-            fontWeight: 400,
+            fontFamily: 'var(--font-family-display-v2)',
+            fontWeight: 500,
             textShadow: `0 0 24px ${chapter.tint}`,
           }}
         >

@@ -1,10 +1,38 @@
 'use client';
 import './globals.css'
 import React, { useEffect, useState } from 'react'
+import Lenis from 'lenis'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [showPreloader, setShowPreloader] = useState(true)
+
+  // Lenis smooth scroll — initialised AFTER the preloader finishes so the
+  // body's overflow-hidden state doesn't interfere with Lenis attaching.
+  useEffect(() => {
+    if (!isLoaded) return
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+    })
+
+    let raf = 0
+    function frame(time: number) {
+      lenis.raf(time)
+      raf = requestAnimationFrame(frame)
+    }
+    raf = requestAnimationFrame(frame)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      lenis.destroy()
+    }
+  }, [isLoaded])
 
   useEffect(() => {
     let hasFinished = false

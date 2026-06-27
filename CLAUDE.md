@@ -15,20 +15,20 @@ There is no test runner configured in this repo.
 
 This is a Next.js 16 (App Router) + React 19 + Tailwind CSS v4 personal portfolio.
 
-**Two entry points, and they are not equivalent:**
-- `app/page.tsx` (`/`) is still the default `create-next-app` template and is *not* the real portfolio.
-- `app/demo/page.tsx` (`/demo`) is the actual portfolio composition. When asked to change "the site", this is almost always the page to edit.
+**Routes:**
+- `app/page.tsx` (`/`) **is the portfolio** — the only one. It is a `'use client'` page (pixel / twilight-CRT theme with a day/night cycle and a `/`-command bar), composed of section components from `components/`: `Hero`, `Origin`, `SelectedWork`, `Stack`, `SideQuests`, `Hackathons`, `Now`, `Outro`, plus fixed-atmosphere layers (`Starfield`, `Scanlines`, `CursorSprite`, `CommandBar`). When asked to change "the site", this is the page.
+- `app/v2/page.tsx` (`/v2`) is a server-side `redirect('/')` kept only so old links resolve.
+- The old v1 portfolio and three.js deps have been removed. There is no WebGL anywhere — the scene (`PixelScene`) is plain 2D canvas.
 
-`/demo` composes section components from `components/ui/` in this order: `FloatingNav`, `CommandMenu`, `Spotify`, `Hero` (dynamically imported with `ssr: false`), then `About`, `ProjectsGrid`, `Skills`, `Contact`, `Footer` inside a `z-10` wrapper that sits above the fixed hero background.
+**Layout (flat, no `v2` prefix):**
+- `components/` — all UI components (one flat folder).
+- `lib/` — non-component logic: `utils.ts` (`cn`), `lenis-store.ts` (scroll pub/sub), `motion-settings.ts` (`useV2MotionSettings` — reduced-motion / device tuning), `time-presets.ts` (`getInterpolatedPreset` — hour → sky/colour preset).
+- `data/` — content: `chapters.ts` (projects), `hackathons.ts`, `quests.ts`.
 
-**Hero is client-only on purpose.** `hero-ascii-one` and `PixelBlast` use `three` / `postprocessing` (WebGL) and must not run during SSR — keep the `dynamic(..., { ssr: false })` import in `app/demo/page.tsx` when touching it.
+**Smooth scrolling is global.** `app/layout.tsx` is a server component that exports `metadata` and renders `app/providers.tsx` (`'use client'`), which instantiates [Lenis](https://github.com/darkroomengineering/lenis), drives it from `requestAnimationFrame`, and runs the initial preloader. `providers.tsx` also broadcasts the Lenis scroll value via `lib/lenis-store.ts` so scroll-reactive layers (Hero parallax) stay in lockstep with the content — read from there, not `window.scrollY`. Anything that competes with scroll (custom scroll listeners, `scroll-snap`, locking `overflow`) needs to coordinate with Lenis.
 
-**Smooth scrolling is global.** `app/layout.tsx` is a `'use client'` component that instantiates [Lenis](https://github.com/darkroomengineering/lenis) in a `useEffect` and drives it from `requestAnimationFrame`. Anything that competes with scroll (custom scroll listeners, `scroll-snap`, locking `overflow`) needs to coordinate with Lenis. `html { scroll-behavior: smooth }` is also set in `globals.css`.
+**Styling — Tailwind v4 with `@theme`.** `app/globals.css` defines design tokens via the v4 `@theme { ... }` block. The v2 theme uses `--color-v2-*` and `--font-family-*-v2` (DotGothic16/Silkscreen/Doto pixel fonts, Geist for body/headings, VT323 terminal). Fonts load via `<link>` in `app/layout.tsx`; Aeonik is still in `public/fonts/`. There is no `tailwind.config.*`. Use `cn()` from `lib/utils.ts` when composing class names.
 
-**Styling — Tailwind v4 with `@theme`.** `app/globals.css` defines the design tokens via the v4 `@theme { ... }` block (`--color-bg`, `--color-accent-1`, `--color-accent-2`, `--font-family-mono-head` for Silkscreen, `--font-family-body` for Aeonik). Aeonik is loaded from `public/fonts/` via `@font-face`; Silkscreen is loaded from Google Fonts in `app/layout.tsx`. There is no `tailwind.config.*` — all theme customization happens in CSS. Use `cn()` from `lib/utils.ts` (clsx + tailwind-merge) when conditionally composing class names.
+**Path alias.** `@/*` resolves to the repo root, so imports use `@/components/...`, `@/lib/...`, `@/data/...`.
 
-**Path alias.** `@/*` resolves to the repo root (see `tsconfig.json`), so imports use `@/components/ui/...`, `@/lib/utils`, `@/data/projects`.
-
-**`components/ui/index.ts` is incomplete** — it only re-exports `SiteHeader` and `Footer`. Every other section is imported by direct path from `app/demo/page.tsx`. Don't assume the barrel file is the source of truth.
-
-**Project data** lives in `data/projects.ts` as a typed `Project[]` and is consumed by `ProjectsGrid`. Add new portfolio entries there rather than hardcoding into the component.
+**Content data** lives in `data/chapters.ts` (projects), `data/hackathons.ts`, and `data/quests.ts`. Edit those rather than hardcoding into components. `ProjectChapter` renders a chapter's `image` (a screenshot under `/public`, e.g. `/projects/truelend.png`) when set, and falls back to a tinted pixel title-card otherwise — so add screenshots by setting `image` on a chapter and dropping the file in `public/`.

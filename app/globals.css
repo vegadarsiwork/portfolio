@@ -138,7 +138,7 @@ html.lenis body {
   outline-offset: 2px;
 }
 
-html, body, #root, #__next {
+html, body {
   min-height: 100%;
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface CommandBarProps {
   open: boolean;
@@ -30,6 +30,26 @@ export default function CommandBar({
   onClose,
 }: CommandBarProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [kbInset, setKbInset] = useState(0);
+
+  // Lift the bar above the on-screen keyboard on mobile (visualViewport shrinks
+  // by the keyboard height when it opens). Falls back to 0 where unsupported.
+  useEffect(() => {
+    if (!open) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      const inset = window.innerHeight - vv.height - vv.offsetTop;
+      setKbInset(inset > 0 ? inset : 0);
+    };
+    vv.addEventListener('resize', onResize);
+    vv.addEventListener('scroll', onResize);
+    onResize();
+    return () => {
+      vv.removeEventListener('resize', onResize);
+      vv.removeEventListener('scroll', onResize);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -53,7 +73,10 @@ export default function CommandBar({
   if (!open) return null;
 
   return (
-    <div className="fixed left-4 bottom-4 z-[120] w-[min(620px,calc(100vw-2rem))] pointer-events-auto">
+    <div
+      className="fixed left-4 z-[120] w-[min(620px,calc(100vw-2rem))] pointer-events-auto"
+      style={{ bottom: `calc(1rem + ${kbInset}px + env(safe-area-inset-bottom))` }}
+    >
       {suggestions.length > 0 && (
         <div
           data-v2-commandbar
@@ -125,7 +148,7 @@ export default function CommandBar({
             autoCapitalize="off"
             autoComplete="off"
             autoCorrect="off"
-            className="w-full bg-transparent text-sm font-bold tracking-[0.08em] text-[var(--color-v2-text)] outline-none placeholder:text-[var(--color-v2-muted)]/70"
+            className="w-full bg-transparent text-base sm:text-sm font-bold tracking-[0.08em] text-[var(--color-v2-text)] outline-none placeholder:text-[var(--color-v2-muted)]/70"
             placeholder="tickrate 20"
           />
         </div>

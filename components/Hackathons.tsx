@@ -110,7 +110,7 @@ export default function Hackathons() {
                         href={h.demo}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[10px] tracking-[0.2em] px-3 py-1 border border-[var(--color-v2-orange)]/60 text-[var(--color-v2-orange)] hover:bg-[var(--color-v2-orange)] hover:text-[var(--color-v2-bg)] transition-colors"
+                        className="inline-flex items-center min-h-[44px] text-[10px] tracking-[0.2em] px-3 py-1 border border-[var(--color-v2-orange)]/60 text-[var(--color-v2-orange)] hover:bg-[var(--color-v2-orange)] hover:text-[var(--color-v2-bg)] transition-colors"
                       >
                         LIVE -&gt;
                       </a>
@@ -120,7 +120,7 @@ export default function Hackathons() {
                         href={h.repo}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[10px] tracking-[0.2em] px-3 py-1 border border-[var(--color-v2-muted)]/40 text-[var(--color-v2-text)] hover:border-[var(--color-v2-text)] transition-colors"
+                        className="inline-flex items-center min-h-[44px] text-[10px] tracking-[0.2em] px-3 py-1 border border-[var(--color-v2-muted)]/40 text-[var(--color-v2-text)] hover:border-[var(--color-v2-text)] transition-colors"
                       >
                         CODE -&gt;
                       </a>

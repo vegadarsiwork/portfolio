@@ -25,7 +25,7 @@ export default function SideQuests() {
           point.
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 text-left">
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 text-left">
           {quests.map((q, i) => (
             <motion.div
               key={q.title}
@@ -203,6 +203,13 @@ function PixelHoverLab({ tint }: { tint: string }) {
   return (
     <div
       className="relative h-full w-full cursor-crosshair"
+      onPointerDown={(e) => {
+        // Touch has no hover — a tap lights the grid at the touch point.
+        const rect = e.currentTarget.getBoundingClientRect();
+        mouseRef.current.x = e.clientX - rect.left;
+        mouseRef.current.y = e.clientY - rect.top;
+        mouseRef.current.active = true;
+      }}
       onPointerMove={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         mouseRef.current.x = e.clientX - rect.left;

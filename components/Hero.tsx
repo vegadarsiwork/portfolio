@@ -210,7 +210,7 @@ export default function Hero({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.55, ease: [0.21, 0.47, 0.32, 0.98] }}
-            className="block -mt-1 md:-mt-2 text-[clamp(52px,12vw,160px)] leading-[0.95] tracking-tight text-[var(--color-v2-text)]"
+            className="block -mt-1 md:-mt-2 text-[clamp(40px,12vw,160px)] leading-[0.95] tracking-tight text-[var(--color-v2-text)]"
             style={{
               fontFamily: 'var(--font-family-hero-v2)',
               fontWeight: 400,

@@ -319,6 +319,23 @@ export default function Home() {
         onClose={() => setCommandOpen(false)}
       />
 
+      {/* Touch trigger — the command bar is otherwise keyboard-only ('/'), so
+          surface an on-screen opener for coarse-pointer devices. */}
+      {motionSettings.coarsePointer && !commandOpen && (
+        <button
+          type="button"
+          aria-label="Open command bar"
+          onClick={() => setCommandOpen(true)}
+          className="fixed left-4 z-[110] flex h-11 w-11 items-center justify-center border border-[var(--color-v2-orange)]/60 bg-[rgba(7,7,10,0.85)] text-base font-bold text-[var(--color-v2-orange)] backdrop-blur-sm pointer-events-auto"
+          style={{
+            bottom: 'calc(1rem + env(safe-area-inset-bottom))',
+            fontFamily: 'var(--font-family-hero-v2)',
+          }}
+        >
+          /
+        </button>
+      )}
+
       <main className="relative z-10">
         <Hero
           hour={hour}

@@ -188,7 +188,7 @@ export default function Hero({
       </div>
 
       {/* Center: greeting wordmark + belief */}
-      <div className="relative z-10 flex flex-col items-center justify-end min-h-screen px-5 md:px-12 pt-32 md:pt-60 pb-40 md:pb-56 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center md:justify-end min-h-screen px-5 md:px-12 pt-32 md:pt-60 pb-0 md:pb-56 text-center">
         <div className="max-w-5xl w-full">
           {/* "hey," — separate element, kept clear of the wordmark's glow halo */}
           <motion.p

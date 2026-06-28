@@ -18,7 +18,7 @@ export default function Outro() {
     <section
       id="contact"
       ref={ref}
-      className="relative min-h-screen flex flex-col justify-center px-6 md:px-12 py-20 md:py-24 border-t border-[var(--color-v2-muted)]/15"
+      className="relative min-h-screen flex flex-col justify-center px-6 md:px-12 py-12 md:py-24 border-t border-[var(--color-v2-muted)]/15"
     >
       <div className="max-w-6xl mx-auto w-full text-center">
         {/* Marker */}
@@ -62,7 +62,7 @@ export default function Outro() {
         </motion.p>
 
         {/* Contact links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full mx-auto text-left">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 w-full mx-auto text-left">
           {links.map((l, i) => (
             <motion.a
               key={l.label}

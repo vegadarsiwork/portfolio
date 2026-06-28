@@ -8,8 +8,8 @@ import {
 } from '@/lib/time-presets';
 import { onLenisScroll } from '@/lib/lenis-store';
 
-// Constant horizontal pixel density across viewports.
-const W = 480;
+// Max canvas width — on smaller viewports W is reduced so each canvas px ≥ 1.5 CSS px.
+const MAX_W = 480;
 const HORIZON_RATIO = 0.5;
 const ARC_HEIGHT_RATIO = 0.85;
 
@@ -52,7 +52,7 @@ function hash2D(a: number, b: number, seed: number) {
 
 // ─── Sun & moon — retro day/night arc ─────────────────────────────────────
 
-function getSunPos(hour: number, H: number, HORIZON: number): { x: number; y: number } | null {
+function getSunPos(hour: number, H: number, HORIZON: number, W: number): { x: number; y: number } | null {
   if (hour < 5 || hour > 19) return null;
   const t = (hour - 5) / 14;
   const arcHeight = HORIZON * ARC_HEIGHT_RATIO;
@@ -62,7 +62,7 @@ function getSunPos(hour: number, H: number, HORIZON: number): { x: number; y: nu
   };
 }
 
-function getMoonPos(hour: number, H: number, HORIZON: number): { x: number; y: number } | null {
+function getMoonPos(hour: number, H: number, HORIZON: number, W: number): { x: number; y: number } | null {
   let h = hour;
   if (h < 12) h += 24;
   if (h < 17 || h > 31) return null;
@@ -232,18 +232,22 @@ export default function PixelScene({
   // Latest Lenis scroll value — drives the front skyline's faster parallax.
   const scrollRef = useRef(0);
 
-  // Dynamic canvas dimensions — recompute on viewport resize
+  // Dynamic canvas dimensions — recompute on viewport resize.
+  // W is clamped so each canvas px maps to ≥1.5 CSS px — preserves the chunky
+  // pixel-art scale on narrow mobile viewports instead of sub-pixel rendering.
   const [H, setH] = useState(270);
   const [viewportW, setViewportW] = useState(1280);
+  const W = Math.min(MAX_W, Math.floor(viewportW / 1.5));
   const HORIZON = Math.round(H * HORIZON_RATIO);
 
   useEffect(() => {
     function compute() {
       if (typeof window === 'undefined') return;
-      const aspect = window.innerWidth / window.innerHeight;
-      const newH = Math.round(W / aspect);
-      setH(newH);
-      setViewportW(window.innerWidth);
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const newW = Math.min(MAX_W, Math.floor(vw / 1.5));
+      setH(Math.round(newW * vh / vw));
+      setViewportW(vw);
     }
     compute();
     window.addEventListener('resize', compute);
@@ -575,12 +579,12 @@ export default function PixelScene({
       drawClouds(preset);
 
       // Moon first (in case sun and moon overlap, sun should be on top)
-      const moonPos = getMoonPos(h, H, HORIZON);
+      const moonPos = getMoonPos(h, H, HORIZON, W);
       if (moonPos) {
         drawMoon(ctx, Math.round(moonPos.x), Math.round(moonPos.y), moonRadius, moonPhase);
       }
 
-      const sunPos = getSunPos(h, H, HORIZON);
+      const sunPos = getSunPos(h, H, HORIZON, W);
       if (sunPos) {
         drawSun(ctx, Math.round(sunPos.x), Math.round(sunPos.y), sunRadius, t);
       }
@@ -606,7 +610,7 @@ export default function PixelScene({
     draw();
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [layout, H, HORIZON, moonPhase, reduceMotion, targetFps, viewportW]);
+  }, [layout, H, HORIZON, W, moonPhase, reduceMotion, targetFps, viewportW]);
 
   return (
     <canvas

@@ -4,7 +4,7 @@ import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 
 const links = [
-  { label: 'EMAIL',    value: 'vegadarsiwork@gmail.com', href: 'mailto:vegadarsiwork@gmail.com' },
+  { label: 'EMAIL',    value: 'hey@vega.fyi', href: 'mailto:hey@vega.fyi' },
   { label: 'GITHUB',   value: 'github.com/vegadarsiwork', href: 'https://github.com/vegadarsiwork' },
   { label: 'LINKEDIN', value: 'linkedin.com/in/vega-darsi', href: 'https://www.linkedin.com/in/vega-darsi/' },
   { label: 'RESUME',   value: 'download (pdf)', href: '/Vega_Darsi_Resume.pdf' },
@@ -18,9 +18,9 @@ export default function Outro() {
     <section
       id="contact"
       ref={ref}
-      className="relative px-6 md:px-12 pt-32 md:pt-48 pb-16 border-t border-[var(--color-v2-muted)]/15"
+      className="relative min-h-screen flex flex-col justify-center px-6 md:px-12 py-20 md:py-24 border-t border-[var(--color-v2-muted)]/15"
     >
-      <div className="max-w-6xl mx-auto text-center">
+      <div className="max-w-6xl mx-auto w-full text-center">
         {/* Marker */}
         <motion.div
           initial={{ opacity: 0, y: -4 }}

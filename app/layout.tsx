@@ -39,9 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Doto in its own request — combining many variable-axis fonts in one URL was causing it to not load reliably */}
+        {/* Doto in its own request — combining variable-axis fonts in one URL made it load unreliably */}
         <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Geist:wght@100..900&family=DotGothic16&family=VT323&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Geist:wght@100..900&family=Geist+Pixel&display=swap" rel="stylesheet" />
       </head>
       <body>
         <Providers>{children}</Providers>

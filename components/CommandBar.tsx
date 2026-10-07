@@ -80,13 +80,7 @@ export default function CommandBar({
       {suggestions.length > 0 && (
         <div
           data-v2-commandbar
-          className="mb-2 border border-[var(--color-v2-orange)]/45 bg-[rgba(7,7,10,0.88)] p-1 backdrop-blur-sm"
-          style={{
-            boxShadow:
-              '0 0 0 1px color-mix(in srgb, var(--color-v2-orange) 12%, transparent), 0 0 20px color-mix(in srgb, var(--color-v2-orange) 14%, transparent)',
-            fontFamily: 'var(--font-family-hero-v2)',
-            fontWeight: 700,
-          }}
+          className="pxl mb-2 border-2 border-[var(--color-v2-orange)]/50 bg-[var(--color-v2-bg)] p-1"
         >
           {suggestions.map((suggestion, index) => (
             <button
@@ -94,7 +88,7 @@ export default function CommandBar({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectSuggestion(suggestion)}
-              className={`block w-full px-3 py-2 text-left text-xs tracking-[0.08em] transition-colors ${
+              className={`px-step block w-full px-3 py-2 text-left ${
                 index === selectedSuggestion
                   ? 'bg-[var(--color-v2-orange)]/16 text-[var(--color-v2-orange)]'
                   : 'text-[var(--color-v2-text)]/88 hover:bg-[var(--color-v2-orange)]/10 hover:text-[var(--color-v2-orange)]'
@@ -107,21 +101,16 @@ export default function CommandBar({
       )}
       <div
         data-v2-commandbar
-        className="border border-[var(--color-v2-orange)]/65 bg-[rgba(7,7,10,0.92)] px-4 py-3 backdrop-blur-sm"
-        style={{
-          boxShadow:
-            '0 0 0 1px color-mix(in srgb, var(--color-v2-orange) 18%, transparent), 0 0 18px color-mix(in srgb, var(--color-v2-orange) 24%, transparent), 0 0 42px color-mix(in srgb, var(--color-v2-orange) 16%, transparent)',
-          fontFamily: 'var(--font-family-hero-v2)',
-          fontWeight: 700,
-        }}
+        className="pxl border-2 border-[var(--color-v2-orange)] bg-[var(--color-v2-bg)] px-4 py-3"
+        style={{ boxShadow: 'var(--px) var(--px) 0 0 rgba(0, 0, 0, 0.55)' }}
       >
         {feedback && (
-          <div className="mb-2 text-xs tracking-[0.12em] text-[var(--color-v2-orange)]/90">
+          <div className="mb-2 text-[var(--color-v2-orange)]">
             {feedback}
           </div>
         )}
         <div className="flex items-center gap-3">
-          <span className="text-base font-bold text-[var(--color-v2-orange)]">/</span>
+          <span className="text-[var(--color-v2-orange)]">/</span>
           <input
             ref={inputRef}
             value={value}
@@ -148,7 +137,7 @@ export default function CommandBar({
             autoCapitalize="off"
             autoComplete="off"
             autoCorrect="off"
-            className="w-full bg-transparent text-base sm:text-sm font-bold tracking-[0.08em] text-[var(--color-v2-text)] outline-none placeholder:text-[var(--color-v2-muted)]/70"
+            className="w-full bg-transparent text-[var(--color-v2-text)] outline-none placeholder:text-[var(--color-v2-muted)]/70"
             placeholder="tickrate 20"
           />
         </div>

@@ -1,43 +1,27 @@
 'use client';
 
-import { motion, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import Section from './Section';
-import StaggerWords from './StaggerWords';
+import PixelReveal from './PixelReveal';
 import { quests, type Quest } from '@/data/quests';
 
 export default function SideQuests() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-15%' });
-
   return (
-    <Section id="quests" marker="V" label="SIDE QUESTS" width="wide">
-      <div ref={ref} className="text-center">
-        <StaggerWords
-          className="text-4xl md:text-6xl lg:text-7xl tracking-tight text-[var(--color-v2-text)] mb-5"
-          style={{ fontFamily: 'var(--font-family-display-v2)', fontWeight: 500 }}
-        >
-          THE SKETCHBOOK.
-        </StaggerWords>
-        <p className="text-base md:text-lg text-[var(--color-v2-text)]/70 max-w-2xl mx-auto mb-14">
-          Smaller, looser things. Real repos, a couple of inline toys. Half are demos, half are
-          mistakes I learned from. None of them would survive a code review and that&apos;s the
-          point.
-        </p>
-
-        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 text-left">
-          {quests.map((q, i) => (
-            <motion.div
-              key={q.title}
-              initial={{ opacity: 0, y: 12 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.06 }}
-            >
-              <QuestCell quest={q} />
-            </motion.div>
+    <Section
+      id="quests"
+      index="04"
+      label="Side quests"
+      title="THE SKETCHBOOK."
+      intro="Smaller, looser things. Real repos, a couple of inline toys. Half are demos, half are mistakes I learned from. None of them would survive a code review and that's the point."
+    >
+      {/* One reveal for the whole grid: the 1px gaps are the grid's own background. */}
+      <PixelReveal>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-[var(--color-v2-muted)]/20 border border-[var(--color-v2-muted)]/20">
+          {quests.map((q) => (
+            <QuestCell key={q.title} quest={q} />
           ))}
         </div>
-      </div>
+      </PixelReveal>
     </Section>
   );
 }
@@ -55,7 +39,7 @@ function QuestCell({ quest }: { quest: Quest }) {
     );
 
   const baseClass =
-    'group relative block aspect-square overflow-hidden border border-[var(--color-v2-muted)]/20 hover:border-[var(--color-v2-orange)]/60 transition-colors';
+    'group relative block h-full aspect-[4/3] overflow-hidden';
 
   if (quest.href && !quest.kind) {
     return (
@@ -64,7 +48,7 @@ function QuestCell({ quest }: { quest: Quest }) {
         target="_blank"
         rel="noreferrer"
         className={`${baseClass} cursor-pointer`}
-        style={{ backgroundColor: 'var(--color-v2-surface)' }}
+        style={{ backgroundColor: 'var(--color-v2-bg)' }}
       >
         {content}
       </a>
@@ -72,7 +56,7 @@ function QuestCell({ quest }: { quest: Quest }) {
   }
 
   return (
-    <div className={baseClass} style={{ backgroundColor: 'var(--color-v2-surface)' }}>
+    <div className={baseClass} style={{ backgroundColor: 'var(--color-v2-bg)' }}>
       {content}
     </div>
   );
@@ -83,36 +67,16 @@ function QuestCell({ quest }: { quest: Quest }) {
 function StaticTile({ quest }: { quest: Quest }) {
   return (
     <>
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(circle at 50% 100%, ${quest.tint}55 0%, transparent 70%)`,
-        }}
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-25"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 5px)',
-        }}
-      />
       <div className="relative z-10 h-full flex flex-col justify-between p-3 md:p-4">
-        <div
-          className="text-[9px] tracking-[0.25em] text-[var(--color-v2-muted)]"
-          style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-        >
-          &gt; {quest.tag}
+        <div className="meta">
+          {quest.tag}
         </div>
         <div>
-          <div
-            className="text-base md:text-lg tracking-tight text-[var(--color-v2-text)] leading-tight group-hover:text-[var(--color-v2-orange)] transition-colors"
-            style={{ fontFamily: 'var(--font-family-pixel-v2)', fontWeight: 400 }}
-          >
+          <div className="px-step text-base md:text-lg font-medium text-[var(--color-v2-text)] group-hover:text-[var(--color-v2-orange)]">
             {quest.title}
           </div>
           {quest.blurb && (
-            <div className="mt-1 text-[10px] md:text-[11px] text-[var(--color-v2-text)]/55 leading-snug hidden sm:block">
+            <div className="mt-1 text-xs text-[var(--color-v2-text)]/60 leading-snug hidden sm:block">
               {quest.blurb}
             </div>
           )}
@@ -181,11 +145,9 @@ function PixelHoverLab({ tint }: { tint: string }) {
           const cy = y * CELL + CELL / 2;
           const d = active ? Math.hypot(cx - mx, cy - my) : Infinity;
           const falloff = active ? Math.max(0, 1 - d / maxDist) : 0;
-          const base = 0.05 + 0.04 * Math.sin((x + y) * 0.6);
-          const a = Math.min(0.95, base + falloff * 0.85);
-          if (a < 0.06) continue;
-          ctx.fillStyle = falloff > 0.02 ? hexWithAlpha(tint, a) : `rgba(138,125,160,${a.toFixed(3)})`;
-          ctx.fillRect(x * CELL, y * CELL, CELL - 1, CELL - 1);
+          if (falloff <= 0.02) continue;
+          ctx.fillStyle = hexWithAlpha(tint, Math.min(0.95, falloff * 0.9));
+          ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
         }
       }
 
@@ -221,21 +183,15 @@ function PixelHoverLab({ tint }: { tint: string }) {
       }}
     >
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
-      <div className="relative z-10 h-full flex flex-col justify-between p-4 pointer-events-none">
-        <div
-          className="text-[9px] tracking-[0.25em] text-[var(--color-v2-muted)]"
-          style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-        >
-          &gt; CANVAS / LAB
+      <div className="relative z-10 h-full flex flex-col justify-between p-3 md:p-4 pointer-events-none">
+        <div className="meta">
+          Canvas / lab
         </div>
         <div>
-          <div
-            className="text-base md:text-lg tracking-tight text-[var(--color-v2-text)] leading-tight"
-            style={{ fontFamily: 'var(--font-family-pixel-v2)', fontWeight: 400 }}
-          >
+          <div className="text-base md:text-lg font-medium text-[var(--color-v2-text)]">
             HOVER GRID
           </div>
-          <div className="mt-1 text-[10px] md:text-[11px] text-[var(--color-v2-text)]/55 leading-snug hidden sm:block">
+          <div className="mt-1 text-xs text-[var(--color-v2-text)]/60 leading-snug hidden sm:block">
             move your cursor over me.
           </div>
         </div>
@@ -321,38 +277,21 @@ function ReactionLab({ tint }: { tint: string }) {
       type="button"
       onClick={begin}
       className="relative h-full w-full text-left cursor-pointer"
-      style={{ backgroundColor: bg, transition: 'background-color 90ms linear' }}
+      style={{ backgroundColor: bg }}
     >
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-25 pointer-events-none"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 5px)',
-        }}
-      />
       <div className="relative z-10 h-full flex flex-col justify-between p-3 md:p-4">
-        <div
-          className="text-[9px] tracking-[0.25em] text-[var(--color-v2-muted)]"
-          style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-        >
-          &gt; MINI-GAME / LAB
+        <div className="meta">
+          Mini-game / lab
         </div>
         <div>
-          <div
-            className="text-base md:text-lg tracking-tight text-[var(--color-v2-text)] leading-tight"
-            style={{ fontFamily: 'var(--font-family-pixel-v2)', fontWeight: 400 }}
-          >
+          <div className="text-base md:text-lg font-medium text-[var(--color-v2-text)]">
             REACTION
           </div>
-          <div className="mt-1 text-[11px] text-[var(--color-v2-text)]/70 leading-snug">
+          <div className="mt-1 text-sm text-[var(--color-v2-text)]/80">
             {label}
           </div>
           {best !== null && (
-            <div
-              className="mt-2 text-[10px] tracking-[0.2em] text-[var(--color-v2-orange)]"
-              style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-            >
+            <div className="meta mt-2 text-[var(--color-v2-orange)]">
               BEST / {Math.round(best)}MS
             </div>
           )}

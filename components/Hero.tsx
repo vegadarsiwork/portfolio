@@ -11,8 +11,7 @@ interface HeroProps {
   onHourChange: (h: number) => void;
   autoMode: boolean;
   onAutoToggle: () => void;
-  presetLabel: string;
-  /** False until client-side state is initialized — fades the canvas in. */
+  /** False until client-side state is initialized. */
   mounted: boolean;
   motionSettings: V2MotionSettings;
 }
@@ -23,134 +22,112 @@ function formatHour(h: number): string {
   return `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`;
 }
 
+// Status bar: where I am, and the clock there.
+const LOCATION = 'India';
+const TIME_ZONE = 'Asia/Kolkata';
+const ZONE_LABEL = 'IST';
+
+/** The current HH:MM in a time zone, or null until the client has mounted. */
+function useLocalTime(timeZone: string): string | null {
+  const [time, setTime] = useState<string | null>(null);
+  useEffect(() => {
+    const format = new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hour12: false });
+    const tick = () => setTime(format.format(new Date()));
+    const first = window.setTimeout(tick, 0);
+    const id = window.setInterval(tick, 15_000);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(id);
+    };
+  }, [timeZone]);
+  return time;
+}
+
+const EASE = [0.21, 0.47, 0.32, 0.98] as const;
+const enter = (delay: number) => ({ duration: 0.9, delay, ease: EASE });
+
 export default function Hero({
   hour,
   onHourChange,
   autoMode,
   onAutoToggle,
-  presetLabel,
   mounted,
   motionSettings,
 }: HeroProps) {
-  const bgWrapperRef = useRef<HTMLDivElement | null>(null);
-  const sectionRef = useRef<HTMLElement | null>(null);
+  const copyRef = useRef<HTMLDivElement | null>(null);
   const [controlsOpen, setControlsOpen] = useState(false);
+  const localTime = useLocalTime(TIME_ZONE);
   const isNight = hour < 6 || hour >= 19;
+  // The wordmark is plain against a dark sky. Only a bright daytime sky (if the
+  // visitor moves the clock there) needs the outline to stay readable.
+  const ink = hour > 6.5 && hour < 17.4 ? 'px-shadow' : '';
 
-  // Scroll-driven parallax — the bg wrapper is pulled back so it scrolls slower
-  // than the wordmark, creating depth. Driven by Lenis's own scroll value (via
-  // the lenis-store pub/sub) so the transform is computed from the exact same
-  // subpixel position, in the same frame, as the content. Sampling window.scrollY
-  // in a separate RAF instead desyncs by a frame and makes the buildings judder
-  // on scrollbar drags.
+  // Scroll-driven exit: the wordmark climbs faster than the page and fades out.
+  // Driven by the Lenis scroll value so it stays in the same frame as the
+  // content (see lenis-store).
   useEffect(() => {
     if (motionSettings.reduceMotion) return;
     const update = (scroll: number) => {
-      // Cap to the first viewport so it stops updating once the hero is gone.
-      const capped = Math.min(scroll, window.innerHeight);
-      if (bgWrapperRef.current) {
-        bgWrapperRef.current.style.transform = `translate3d(0, ${(capped * 0.72).toFixed(1)}px, 0)`;
-      }
+      const el = copyRef.current;
+      if (!el) return;
+      const progress = Math.min(1, scroll / (window.innerHeight * 0.7));
+      el.style.transform = `translate3d(0, ${(-scroll * 0.3).toFixed(1)}px, 0)`;
+      el.style.opacity = String(1 - progress);
     };
     update(window.scrollY); // initial position before Lenis emits
     return onLenisScroll(update);
   }, [motionSettings.reduceMotion]);
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen w-full overflow-clip select-none">
-      {/* Background layer — sky, sun/moon, distant skyline. Slow parallax. */}
-      <div
-        ref={bgWrapperRef}
-        className="absolute inset-0 z-0"
-        style={{
-          // The sky just exists — always rendered, no reveal/fade gating. Only
-          // the skyline fades in (handled inside PixelScene).
-          willChange: 'transform',
-        }}
-      >
-        <PixelScene
-          hour={hour}
-          targetFps={motionSettings.heroFps}
-          reduceMotion={motionSettings.reduceMotion}
-        />
-      </div>
+    <section className="relative min-h-screen w-full overflow-clip select-none">
+      {/* The skyline. It belongs to the hero and scrolls away with it. */}
+      <PixelScene view="skyline" hour={hour} fps={motionSettings.sceneFps} />
 
-      {/* Foreground layer — close large silhouette. Faster parallax. */}
+      {/* Status bar — who, where, and the local time there. The button on the
+          right changes the scene's time of day, which is separate from it. */}
+      <div className="absolute top-0 inset-x-0 z-20 px-5 md:px-12 pt-4 md:pt-8">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={enter(0.2)}
+          className="max-w-5xl mx-auto flex items-center justify-between gap-4"
+        >
+          <span className="meta px-outline text-[var(--color-v2-text)]">Vega Darsi</span>
 
-      {/* Bottom fade + global dim — layered on top of both canvases */}
-      <div className="absolute inset-0 z-[2] pointer-events-none">
-        <div
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-48"
-          style={{
-            background:
-              'linear-gradient(to bottom, transparent 0%, #07070a 85%, #07070a 100%)',
-          }}
-        />
-        <div
-          aria-hidden
-          className="absolute inset-0"
-          style={{ background: 'rgba(7, 7, 10, 0.2)' }}
-        />
-      </div>
-
-      {/* Top bar — status pill on left, time slider on right */}
-      <div className="absolute top-0 inset-x-0 z-20 px-4 md:px-12 pt-4 md:pt-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="flex items-center gap-3 text-[10px] md:text-xs tracking-[0.2em] text-[var(--color-v2-text)]"
-            style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--color-v2-orange)] opacity-60 animate-ping [animation-duration:2s]" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-v2-orange)]" />
-            </span>
-            <span className="opacity-80">ONLINE</span>
-            <span className="opacity-30">/</span>
-            <span className="text-[var(--color-v2-orange)] hidden sm:inline tabular-nums">
-              {mounted ? `${presetLabel} / ${formatHour(hour)}` : '- / -'}
-            </span>
-          </motion.div>
-
-          {/* Time controls — pill stays in place; expanded slider floats
-              as an absolute-positioned popover below it so nothing in
-              the top bar shifts when it opens. */}
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative"
-            style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-          >
-            <button
-              onClick={() => setControlsOpen((v) => !v)}
-              className={`flex items-center gap-2 px-3 py-2 border bg-[var(--color-v2-bg)]/70 backdrop-blur-sm transition-colors ${
-                controlsOpen
-                  ? 'border-[var(--color-v2-orange)]'
-                  : 'border-[var(--color-v2-muted)]/30 hover:border-[var(--color-v2-orange)]'
-              }`}
-              aria-label={controlsOpen ? 'Close time controls' : 'Open time controls'}
-              aria-expanded={controlsOpen}
-              title={`Time / ${mounted ? formatHour(hour) : '-'}`}
-            >
-              <TimeIcon isNight={isNight} />
-              <span className="text-[10px] tracking-[0.2em] text-[var(--color-v2-text)]/80 tabular-nums">
-                {mounted ? formatHour(hour) : '-'}
+          <div className="flex items-center gap-3 md:gap-4">
+            <span className="meta px-outline flex items-center gap-2 tabular-nums whitespace-nowrap">
+              <span>{LOCATION}</span>
+              <span aria-hidden>/</span>
+              <span>
+                <span className="text-[var(--color-v2-text)]">{localTime ?? '--:--'}</span> {ZONE_LABEL}
               </span>
-            </button>
+            </span>
+
+            {/* Sky control — the button stays in place; the slider floats below
+                it as a popover so nothing in the bar shifts when it opens. */}
+            <div className="relative">
+              <button
+                onClick={() => setControlsOpen((v) => !v)}
+                className={`px-step flex h-9 w-9 items-center justify-center border bg-[var(--color-v2-bg)]/80 ${
+                  controlsOpen
+                    ? 'border-[var(--color-v2-orange)]'
+                    : 'border-[var(--color-v2-muted)]/40 hover:border-[var(--color-v2-orange)]'
+                }`}
+                aria-label={controlsOpen ? 'Close sky controls' : 'Change the sky’s time of day'}
+                aria-expanded={controlsOpen}
+                title={`Sky / ${mounted ? formatHour(hour) : '-'}`}
+              >
+                <TimeIcon isNight={isNight} />
+              </button>
 
             <AnimatePresence>
               {controlsOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                  transition={{ duration: 0.22, ease: [0.21, 0.47, 0.32, 0.98] }}
-                  className="absolute right-0 top-full mt-2 z-30 flex items-center gap-3 px-3 py-2 border border-[var(--color-v2-orange)]/50 bg-[var(--color-v2-bg)]/90 backdrop-blur-sm origin-top-right"
-                  style={{ transformOrigin: 'top right' }}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.22, ease: EASE }}
+                  className="absolute right-0 top-full mt-2 z-30 flex items-center gap-3 px-3 py-2 border border-[var(--color-v2-orange)]/60 bg-[var(--color-v2-bg)]"
                 >
                   <input
                     type="range"
@@ -165,58 +142,40 @@ export default function Hero({
                   />
                   <button
                     onClick={onAutoToggle}
-                    className={`shrink-0 flex items-center gap-1.5 px-2 py-1 text-[9px] tracking-[0.15em] border transition-colors ${
+                    className={`meta px-step shrink-0 flex items-center gap-2 px-2 py-1 border ${
                       autoMode
-                        ? 'border-[var(--color-v2-orange)] text-[var(--color-v2-orange)] bg-transparent'
-                        : 'text-[var(--color-v2-text)]/70 border-[var(--color-v2-muted)]/40 hover:border-[var(--color-v2-orange)] hover:text-[var(--color-v2-orange)]'
+                        ? 'border-[var(--color-v2-orange)] text-[var(--color-v2-orange)]'
+                        : 'border-[var(--color-v2-muted)]/40 hover:border-[var(--color-v2-orange)] hover:text-[var(--color-v2-orange)]'
                     }`}
                     title={autoMode ? 'Following wall clock - click to pause' : 'Click to follow wall clock'}
                   >
-                    {autoMode && (
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--color-v2-orange)] opacity-60 animate-ping [animation-duration:1.8s]" />
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--color-v2-orange)]" />
-                      </span>
-                    )}
-                    AUTO
+                    Auto
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.div>
-        </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Center: greeting wordmark + belief */}
-      <div className="relative z-10 flex flex-col items-center justify-center md:justify-end min-h-screen px-5 md:px-12 pt-32 md:pt-60 pb-0 md:pb-56 text-center">
-        <div className="max-w-5xl w-full">
-          {/* "hey," — separate element, kept clear of the wordmark's glow halo */}
+      {/* Left: greeting wordmark + belief, on the same column as the rest of the page */}
+      <div className="relative z-10 flex flex-col justify-center min-h-screen px-5 md:px-12 pb-[16vh]">
+        <div ref={copyRef} className="max-w-5xl mx-auto w-full will-change-transform">
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.4, ease: [0.21, 0.47, 0.32, 0.98] }}
-            className="text-[clamp(32px,8vw,96px)] leading-none tracking-tight text-[var(--color-v2-text)] mb-2 md:mb-4"
-            style={{
-              fontFamily: 'var(--font-family-hero-v2)',
-              fontWeight: 400,
-              textShadow:
-                '0 2px 16px rgba(0, 0, 0, 0.7), 0 0 18px color-mix(in srgb, var(--color-v2-orange) 30%, transparent)',
-            }}
+            transition={enter(0.4)}
+            className={`pxh-hey px-glow text-[var(--color-v2-text)] mb-2 md:mb-4 ${ink}`}
           >
             hey,
           </motion.p>
 
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.55, ease: [0.21, 0.47, 0.32, 0.98] }}
-            className="block -mt-1 md:-mt-2 text-[clamp(40px,12vw,160px)] leading-[0.95] tracking-tight text-[var(--color-v2-text)]"
-            style={{
-              fontFamily: 'var(--font-family-hero-v2)',
-              fontWeight: 400,
-              textShadow:
-                '0 0 32px color-mix(in srgb, var(--color-v2-orange) 55%, transparent), 0 0 90px color-mix(in srgb, var(--color-v2-orange) 25%, transparent)',
-            }}
+            transition={enter(0.55)}
+            className={`pxh-1 px-glow text-[var(--color-v2-text)] ${ink}`}
           >
             i&apos;m{' '}
             <span className="text-[var(--color-v2-orange)]">vega</span>.
@@ -225,8 +184,8 @@ export default function Hero({
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.85 }}
-            className="mt-6 md:mt-8 text-lg md:text-2xl max-w-2xl mx-auto leading-snug text-[var(--color-v2-text)]/90"
+            transition={enter(0.85)}
+            className="px-outline mt-6 md:mt-8 text-base md:text-xl font-medium max-w-md leading-snug text-[var(--color-v2-text)]"
           >
             Curiosity is my native language.{' '}
             <span className="text-[var(--color-v2-orange)]">Building things</span> is how I learn to speak it.
@@ -238,20 +197,26 @@ export default function Hero({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 1.4 }}
-        className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 text-center"
-        style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
+        transition={enter(1.4)}
+        className="pointer-events-none absolute bottom-6 md:bottom-10 inset-x-0 z-20 flex flex-col items-center gap-2"
       >
-        <div className="text-[9px] md:text-[10px] tracking-[0.3em] text-[var(--color-v2-muted)]">
-          SCROLL TO DESCEND
-        </div>
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-          className="text-[var(--color-v2-orange)] mt-2 text-xs"
+        {/* Centred in the viewport: the word, with the chevron under it. */}
+        <span className="meta px-outline whitespace-nowrap">Scroll</span>
+        {/* Drawn as pixels (2px each, two rows thick) rather than a letter, and
+            bobbed by a stepped CSS animation (see .px-bob). */}
+        <svg
+          width="14"
+          height="10"
+          viewBox="0 0 7 5"
+          shapeRendering="crispEdges"
+          aria-hidden
+          className="px-bob block text-[var(--color-v2-orange)]"
         >
-          v
-        </motion.div>
+          <path
+            d="M0 0h1v2H0zM6 0h1v2H6zM1 1h1v2H1zM5 1h1v2H5zM2 2h1v2H2zM4 2h1v2H4zM3 3h1v2H3z"
+            fill="currentColor"
+          />
+        </svg>
       </motion.div>
     </section>
   );

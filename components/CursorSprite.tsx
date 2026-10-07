@@ -238,7 +238,6 @@ function PixelDot({ size = 4, index = 0 }: { size?: number; index?: number }) {
           index === 0
             ? '#ffffff'
             : `color-mix(in srgb, #ffffff ${Math.round(warmMix * 100)}%, var(--color-v2-orange))`,
-        boxShadow: `0 0 ${6 + Math.max(0, 3 - index)}px color-mix(in srgb, var(--color-v2-orange) 78%, transparent)`,
       }}
     />
   );

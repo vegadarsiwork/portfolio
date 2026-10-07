@@ -1,24 +1,27 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import Starfield from '@/components/Starfield';
 import Scanlines from '@/components/Scanlines';
 import CursorSprite from '@/components/CursorSprite';
+import CursorTrail from '@/components/CursorTrail';
+import ScrollRail from '@/components/ScrollRail';
+import Moon from '@/components/Moon';
+import FallingStars from '@/components/FallingStars';
 import CommandBar from '@/components/CommandBar';
-import ScrollTopRocket from '@/components/ScrollTopRocket';
+import ScrollTopRocket, { FIREWORKS_EVENT } from '@/components/ScrollTopRocket';
 import Hero from '@/components/Hero';
-import Origin from '@/components/Origin';
-import Experience from '@/components/Experience';
+import About from '@/components/About';
 import SelectedWork from '@/components/SelectedWork';
 import Stack from '@/components/Stack';
 import SideQuests from '@/components/SideQuests';
 import Hackathons from '@/components/Hackathons';
-import Now from '@/components/Now';
 import Outro from '@/components/Outro';
 import { useV2MotionSettings } from '@/lib/motion-settings';
 import { getInterpolatedPreset } from '@/lib/time-presets';
 
 type TimeMode = 'realtime' | 'simulated';
+// The time of day every visit opens on: night, with the moon up over the city.
+const DEFAULT_HOUR = 22;
 const BASE_TICKRATE = 20;
 const FULL_DAY_SECONDS = 20 * 60;
 
@@ -34,10 +37,10 @@ function getCommandSuggestions(input: string) {
   const parts = trimmedEnd ? trimmedEnd.split(/\s+/) : [];
 
   if (parts.length === 0) {
-    return ['help', 'tickrate fast', 'tickrate normal', 'time set sunset', 'time pause'];
+    return ['help', 'tickrate fast', 'tickrate normal', 'time set sunset', 'time pause', 'crt on', 'fireworks'];
   }
 
-  const rootCommands = ['help', 'tickrate', 'time'];
+  const rootCommands = ['help', 'tickrate', 'time', 'crt', 'fireworks'];
   if (parts.length === 1 && !hasTrailingSpace) {
     return rootCommands
       .filter((cmd) => cmd.startsWith(parts[0].toLowerCase()))
@@ -50,6 +53,11 @@ function getCommandSuggestions(input: string) {
     return options
       .filter((option) => option.startsWith(current))
       .map((option) => `tickrate ${option}`);
+  }
+
+  if (parts[0]?.toLowerCase() === 'crt') {
+    const current = hasTrailingSpace ? '' : (parts[1] ?? '').toLowerCase();
+    return ['on', 'off'].filter((option) => option.startsWith(current)).map((option) => `crt ${option}`);
   }
 
   if (parts[0]?.toLowerCase() === 'time') {
@@ -73,8 +81,8 @@ function getCommandSuggestions(input: string) {
 }
 
 export default function Home() {
-  const [hour, setHour] = useState<number>(18);
-  const [autoMode, setAutoMode] = useState<boolean>(true);
+  const [hour, setHour] = useState<number>(DEFAULT_HOUR);
+  const [autoMode, setAutoMode] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
   const [timeMode, setTimeMode] = useState<TimeMode>('realtime');
   const [tickRate, setTickRate] = useState<number>(1);
@@ -82,6 +90,8 @@ export default function Home() {
   const [commandValue, setCommandValue] = useState<string>('');
   const [commandFeedback, setCommandFeedback] = useState<string>('Type /help');
   const [selectedSuggestion, setSelectedSuggestion] = useState<number>(0);
+  // Scanlines, glow and the cursor sprite, off by default. Toggled with /crt on|off.
+  const [crt, setCrt] = useState<boolean>(false);
   const hourRef = useRef(hour);
   const motionSettings = useV2MotionSettings();
 
@@ -99,15 +109,12 @@ export default function Home() {
     hourRef.current = hour;
   }, [hour]);
 
-  // First-mount initialization: sync wall clock + reveal canvas.
-  // Wrapped in setTimeout(0) so the state updates happen in a callback
-  // (satisfying React 19's set-state-in-effect rule).
+  // First-mount initialization. The page opens at DEFAULT_HOUR and stays there;
+  // the clock only starts following real time if the visitor asks for it (the
+  // AUTO button or /time realtime). Wrapped in setTimeout(0) so the state
+  // update happens in a callback (satisfying React 19's set-state-in-effect rule).
   useEffect(() => {
-    const id = window.setTimeout(() => {
-      const now = new Date();
-      setHour(now.getHours() + now.getMinutes() / 60);
-      setMounted(true);
-    }, 0);
+    const id = window.setTimeout(() => setMounted(true), 0);
     return () => window.clearTimeout(id);
   }, []);
 
@@ -191,7 +198,7 @@ export default function Home() {
     const args = parts.slice(1);
 
     if (command === 'help') {
-      setCommandFeedback('Commands: /tickrate <n|fast|normal>, /time set <day|night|sunrise|sunset|hour>, /time pause, /time resume, /time realtime');
+      setCommandFeedback('Commands: /tickrate <n|fast|normal>, /time set <day|night|sunrise|sunset|hour>, /time pause, /time resume, /time realtime, /crt <on|off>, /fireworks');
       setCommandValue('');
       return;
     }
@@ -211,6 +218,26 @@ export default function Home() {
           ? 'Tickrate set to 20x'
           : `Tickrate set to ${nextRate}x`
       );
+      setCommandValue('');
+      return;
+    }
+
+    if (command === 'fireworks') {
+      window.dispatchEvent(new Event(FIREWORKS_EVENT));
+      setCommandFeedback('Fireworks!');
+      setCommandValue('');
+      setCommandOpen(false);
+      return;
+    }
+
+    if (command === 'crt') {
+      const value = args[0]?.toLowerCase();
+      if (value !== 'on' && value !== 'off') {
+        setCommandFeedback('Usage: /crt <on|off>');
+        return;
+      }
+      setCrt(value === 'on');
+      setCommandFeedback(value === 'on' ? 'CRT on - scanlines, glow and cursor sprite' : 'CRT off');
       setCommandValue('');
       return;
     }
@@ -279,15 +306,30 @@ export default function Home() {
     ['--color-v2-orange' as string]: preset.accentColor,
   };
 
+  // The sections take no props, so one stable element tree keeps them from
+  // re-rendering every time the clock ticks.
+  const sections = useMemo(
+    () => (
+      <>
+        <About />
+        <SelectedWork />
+        <Stack />
+        <SideQuests />
+        <Hackathons />
+        <Outro />
+      </>
+    ),
+    []
+  );
+
   return (
-    <div className="relative min-h-screen overflow-x-clip" style={wrapperStyle}>
-      {/* Atmosphere — fixed across the viewport, always visible */}
-      <Starfield
-        density={motionSettings.starDensity}
-        tickRate={motionSettings.reduceMotion ? 0.35 : tickRate}
-      />
-      <Scanlines opacity={motionSettings.scanlineOpacity} />
-      <CursorSprite enabled={motionSettings.enableCursorSprite} />
+    <div className={`relative min-h-screen overflow-x-clip${crt ? ' crt' : ''}`} style={wrapperStyle}>
+      {crt && <Scanlines opacity={motionSettings.reduceMotion ? 0.02 : 0.06} />}
+      <CursorSprite enabled={crt && motionSettings.enableCursorSprite} />
+      <CursorTrail enabled={!crt && motionSettings.enableCursorSprite} />
+      <ScrollRail />
+      <FallingStars />
+      <Moon hour={hour} />
       <ScrollTopRocket />
       <CommandBar
         open={commandOpen}
@@ -326,11 +368,8 @@ export default function Home() {
           type="button"
           aria-label="Open command bar"
           onClick={() => setCommandOpen(true)}
-          className="fixed left-4 z-[110] flex h-11 w-11 items-center justify-center border border-[var(--color-v2-orange)]/60 bg-[rgba(7,7,10,0.85)] text-base font-bold text-[var(--color-v2-orange)] backdrop-blur-sm pointer-events-auto"
-          style={{
-            bottom: 'calc(1rem + env(safe-area-inset-bottom))',
-            fontFamily: 'var(--font-family-hero-v2)',
-          }}
+          className="pxl fixed left-4 z-[110] flex h-11 w-11 items-center justify-center border border-[var(--color-v2-muted)]/40 bg-[var(--color-v2-bg)] text-[var(--color-v2-orange)] pointer-events-auto"
+          style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         >
           /
         </button>
@@ -342,18 +381,10 @@ export default function Home() {
           onHourChange={handleHourChange}
           autoMode={autoMode}
           onAutoToggle={handleAutoToggle}
-          presetLabel={preset.label}
           mounted={mounted}
           motionSettings={motionSettings}
         />
-        <Origin />
-        <Experience />
-        <SelectedWork />
-        <Stack />
-        <SideQuests />
-        <Hackathons />
-        <Now />
-        <Outro />
+        {sections}
       </main>
     </div>
   );

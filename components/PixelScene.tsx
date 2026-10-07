@@ -1,628 +1,282 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  getInterpolatedPreset,
-  getMoonPhase,
-  Y_RATIOS,
-} from '@/lib/time-presets';
+import { useEffect, useRef, useState } from 'react';
+import { getInterpolatedPreset, getMoonPhase } from '@/lib/time-presets';
 import { onLenisScroll } from '@/lib/lenis-store';
-
-// Max canvas width — on smaller viewports W is reduced so each canvas px ≥ 1.5 CSS px.
-const MAX_W = 480;
-const HORIZON_RATIO = 0.5;
-const ARC_HEIGHT_RATIO = 0.85;
-
-interface Star {
-  x: number;
-  y: number;
-  brightness: number;
-  phase: number;
-  large: boolean;
-}
-
-interface Cloud {
-  x: number;
-  y: number;
-  width: number;
-  colorIndex: number;
-}
-
-interface Building {
-  x: number;
-  w: number;
-  h: number;
-  roof: 'flat' | 'antenna' | 'pyramid' | 'double';
-}
-
-function mulberry32(seed: number) {
-  return function () {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function hash2D(a: number, b: number, seed: number) {
-  const value = Math.sin(a * 12.9898 + b * 78.233 + seed * 37.719) * 43758.5453;
-  return value - Math.floor(value);
-}
-
-// ─── Sun & moon — retro day/night arc ─────────────────────────────────────
-
-function getSunPos(hour: number, H: number, HORIZON: number, W: number): { x: number; y: number } | null {
-  if (hour < 5 || hour > 19) return null;
-  const t = (hour - 5) / 14;
-  const arcHeight = HORIZON * ARC_HEIGHT_RATIO;
-  return {
-    x: -25 + t * (W + 50),
-    y: HORIZON - Math.sin(t * Math.PI) * arcHeight,
-  };
-}
-
-function getMoonPos(hour: number, H: number, HORIZON: number, W: number): { x: number; y: number } | null {
-  let h = hour;
-  if (h < 12) h += 24;
-  if (h < 17 || h > 31) return null;
-  const t = (h - 17) / 14;
-  const arcHeight = HORIZON * (ARC_HEIGHT_RATIO - 0.05);
-  return {
-    x: -25 + t * (W + 50),
-    y: HORIZON - Math.sin(t * Math.PI) * arcHeight,
-  };
-}
-
-/** Stars in the hero scene fade with daylight. */
-function getHeroStarVisibility(hour: number): number {
-  if (hour <= 5 || hour >= 20.5) return 1;
-  if (hour >= 8 && hour <= 17) return 0;
-  if (hour < 8) return Math.max(0, (8 - hour) / 3);
-  return Math.max(0, (hour - 17) / 3.5);
-}
+import { PX, hexToVec3 } from '@/lib/pixel';
+import { FRAG, VERT } from '@/lib/scene-shader';
 
 function smoothstep(edge0: number, edge1: number, x: number): number {
   const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
   return t * t * (3 - 2 * t);
 }
 
-function getSkylineLightLevel(hour: number): number {
-  const dawnFade = 1 - smoothstep(6.2, 8.4, hour);
-  const duskFade = smoothstep(17.2, 19.4, hour);
-  return Math.max(dawnFade, duskFade);
+/** Window lights: 1 at night, 0 around noon. */
+function getLightLevel(hour: number): number {
+  return Math.max(1 - smoothstep(6.2, 8.4, hour), smoothstep(17.2, 19.4, hour));
 }
 
-// ─── Sun pixel art (hard color bands) ─────────────────────────────────────
-
-const SUN_OUTLINE = '#d75a12';
-const SUN_BODY = '#ffb52e';
-const SUN_INNER = '#ffd85a';
-const SUN_CORE = '#fff2a0';
-
-function drawPixelSprite(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  scale: number,
-  sprite: string[],
-  palette: Record<string, string>
-) {
-  const pixel = Math.max(1, scale);
-  const width = sprite[0]?.length ?? 0;
-  const height = sprite.length;
-  const startX = cx - Math.floor((width * pixel) / 2);
-  const startY = cy - Math.floor((height * pixel) / 2);
-
-  for (let y = 0; y < height; y++) {
-    const row = sprite[y];
-    for (let x = 0; x < width; x++) {
-      const key = row[x];
-      if (key === '.' || !palette[key]) continue;
-      ctx.fillStyle = palette[key];
-      ctx.fillRect(startX + x * pixel, startY + y * pixel, pixel, pixel);
-    }
-  }
+function getStarVisibility(hour: number): number {
+  if (hour <= 5 || hour >= 20.5) return 1;
+  if (hour >= 8 && hour <= 17) return 0;
+  if (hour < 8) return Math.max(0, (8 - hour) / 3);
+  return Math.max(0, (hour - 17) / 3.5);
 }
 
-function drawSun(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, t: number) {
-  const spriteScale = Math.max(1, Math.round(r / 5));
-  const spriteHaloSize = 10 * spriteScale;
-  const spriteHaloAlpha = 0.08 + Math.sin(t * 0.6) * 0.015;
+// The skyline scrolls at this fraction of the page's speed behind the hero.
+const PARALLAX = 0.72;
 
-  ctx.fillStyle = `rgba(255, 186, 64, ${spriteHaloAlpha.toFixed(3)})`;
-  ctx.fillRect(cx - spriteHaloSize / 2, cy - spriteHaloSize / 2, spriteHaloSize, spriteHaloSize);
-
-  drawPixelSprite(ctx, cx, cy, spriteScale, [
-    'AAAAAAAAAA',
-    'ABBBBBBBBA',
-    'ABCCCCCCBA',
-    'ABCDDDDCBA',
-    'ABCDDDDCBA',
-    'ABCDDDDCBA',
-    'ABCDDDDCBA',
-    'ABCCCCCCBA',
-    'ABBBBBBBBA',
-    'AAAAAAAAAA',
-  ], {
-    A: SUN_OUTLINE,
-    B: SUN_BODY,
-    C: SUN_INNER,
-    D: SUN_CORE,
-  });
-
+/** Position on the retro day/night arc, or null while below the horizon. */
+function arc(t: number, w: number, horizon: number, lift: number): [number, number] | null {
+  if (t < 0 || t > 1) return null;
+  // Rises on the right and sets on the left, so at dusk the moon hangs over the
+  // city on the right, clear of the left-aligned copy.
+  // Kept a little inside the edges so a narrow screen never cuts it in half.
+  const x = Math.min(w - 16, Math.max(16, w + 25 - t * (w + 50)));
+  return [Math.round(x), Math.round(horizon - Math.sin(t * Math.PI) * horizon * lift)];
 }
 
-// ─── Moon pixel art (phase-based lighting) ────────────────────────────────
+const UNIFORMS = [
+  'uRes', 'uTime', 'uView', 'uSky', 'uCloud', 'uGround', 'uAccent', 'uLight', 'uStars', 'uSun', 'uMoon', 'uMoonRight',
+  'uProgress', 'uLift', 'uCut',
+] as const;
+type UniformName = (typeof UNIFORMS)[number];
 
-const MOON_SQUARE_OUTLINE = '#4b4660';
-const MOON_SQUARE_LIGHT = '#efe7cf';
-const MOON_SQUARE_MID = '#c3b79d';
-const MOON_SQUARE_DARK = '#7b718a';
-const MOON_SQUARE_CRATER = '#8d7d68';
-
-function drawMoon(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, phase: number) {
-  const spriteScale = Math.max(1, Math.round(r / 5));
-  const spriteHaloSize = 10 * spriteScale;
-
-  ctx.fillStyle = 'rgba(220, 212, 190, 0.05)';
-  ctx.fillRect(cx - spriteHaloSize / 2, cy - spriteHaloSize / 2, spriteHaloSize, spriteHaloSize);
-
-  const brightSideRight = phase < 0.5;
-  const midpoint = 5;
-
-  drawPixelSprite(
-    ctx,
-    cx,
-    cy,
-    spriteScale,
-    [
-      'AAAAAAAAAA',
-      'ABBBBBBBBA',
-      'ABCMMMCDBA',
-      'ABMCCCDDDA',
-      'ABCCCCCDDA',
-      'ABCCCCCDDA',
-      'ABDCCCCMDA',
-      'ABDDCCCMDA',
-      'ABBBBBBBBA',
-      'AAAAAAAAAA',
-    ].map((row) =>
-      row
-        .split('')
-        .map((cell, index) => {
-          if (cell === 'A' || cell === '.') return cell;
-          const lit = brightSideRight ? index >= midpoint : index < midpoint;
-          if (!lit) {
-            if (cell === 'M') return 'D';
-            if (cell === 'C') return 'D';
-            if (cell === 'B') return 'B';
-          }
-          return cell;
-        })
-        .join('')
-    ),
-    {
-      A: MOON_SQUARE_OUTLINE,
-      B: MOON_SQUARE_MID,
-      C: MOON_SQUARE_LIGHT,
-      D: MOON_SQUARE_DARK,
-      M: MOON_SQUARE_CRATER,
-    }
-  );
-
-}
-
-// ─── Component ────────────────────────────────────────────────────────────
-
+/**
+ * A pixel-art scene filling its (positioned) parent: the hero skyline or the
+ * server room behind the contact section. One low-res WebGL canvas, one art
+ * pixel = PX CSS px, drawn only while it is on screen. Each scene reacts to
+ * scroll: the skyline lags behind the page with its layers separating, and
+ * dissolves into the page through a dither; the server room boots as it arrives.
+ */
 export default function PixelScene({
-  hour = 18,
-  targetFps = 30,
-  reduceMotion = false,
+  view,
+  hour = 0,
+  fps = 30,
   className = '',
 }: {
+  view: 'skyline' | 'desk';
+  /** Time of day, 0..24. The desk scene leaves it at 0: it is always night there. */
   hour?: number;
-  targetFps?: number;
-  reduceMotion?: boolean;
+  fps?: number;
   className?: string;
 }) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const hourRef = useRef(hour);
-  const visibleRef = useRef(true);
-  // Latest Lenis scroll value — drives the front skyline's faster parallax.
-  const scrollRef = useRef(0);
-
-  // Dynamic canvas dimensions — recompute on viewport resize.
-  // W is clamped so each canvas px maps to ≥1.5 CSS px — preserves the chunky
-  // pixel-art scale on narrow mobile viewports instead of sub-pixel rendering.
-  const [H, setH] = useState(270);
-  const [viewportW, setViewportW] = useState(1280);
-  const W = Math.min(MAX_W, Math.floor(viewportW / 1.5));
-  const HORIZON = Math.round(H * HORIZON_RATIO);
-
-  useEffect(() => {
-    function compute() {
-      if (typeof window === 'undefined') return;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const newW = Math.min(MAX_W, Math.floor(vw / 1.5));
-      setH(Math.round(newW * vh / vw));
-      setViewportW(vw);
-    }
-    compute();
-    window.addEventListener('resize', compute);
-    return () => window.removeEventListener('resize', compute);
-  }, []);
-
-  // Real lunar phase for the current date — computed once
-  const moonPhase = useMemo(() => getMoonPhase(), []);
+  const dirtyRef = useRef(true);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     hourRef.current = hour;
+    dirtyRef.current = true;
   }, [hour]);
 
-  // Track scroll so the front skyline can parallax faster than the back. The
-  // canvas as a whole is already translated by Hero's wrapper; this adds an
-  // extra per-frame lift to just the front row for inter-skyline depth.
   useEffect(() => {
-    if (reduceMotion) return;
-    return onLenisScroll((s) => {
-      scrollRef.current = s;
-    });
-  }, [reduceMotion]);
-
-  useEffect(() => {
+    const wrap = wrapRef.current;
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        visibleRef.current = Boolean(entry?.isIntersecting);
-      },
-      { rootMargin: '20% 0px' }
-    );
-    observer.observe(canvas);
-    return () => observer.disconnect();
-  }, []);
+    if (!wrap || !canvas) return;
 
-  // Layout — depends on H so dimensions changes regenerate appropriately
-  const layout = useMemo(() => {
-    const rand = mulberry32(42);
-    const skyHeight = HORIZON;
-    const isMobile = viewportW < 768;
-
-    // Stars — distributed in upper sky region
-    const starYMax = Math.round(HORIZON * 0.78);
-    const stars: Star[] = [];
-    for (let i = 0; i < 150; i++) {
-      const y = rand() < 0.8
-        ? Math.floor(rand() * starYMax * 0.7)
-        : Math.floor(rand() * starYMax);
-      stars.push({
-        x: Math.floor(rand() * W),
-        y,
-        brightness: rand(),
-        phase: rand() * Math.PI * 2,
-        large: rand() > 0.93,
-      });
-    }
-
-    // Clouds — middle sky band
-    const cloudYMin = Math.round(HORIZON * 0.45);
-    const cloudYRange = Math.round(HORIZON * 0.35);
-    const clouds: Cloud[] = [];
-    for (let i = 0; i < 8; i++) {
-      clouds.push({
-        x: Math.floor(rand() * W),
-        y: cloudYMin + Math.floor(rand() * cloudYRange),
-        width: 28 + Math.floor(rand() * 60),
-        colorIndex: Math.floor(rand() * 4),
-      });
-    }
-
-    // Buildings — back row (distant, taller) + front row (closer, shorter).
-    // Both rows cascade the viewport edge-to-edge; the front row sits in
-    // front and hides its own horizon behind the back row.
-    function generateRow(
-      heightRange: [number, number],
-      widthRange: [number, number],
-      xOffset: number
-    ): Building[] {
-      const out: Building[] = [];
-      const [bMin, bMax] = heightRange;
-      const [wMin, wMax] = widthRange;
-      let x = xOffset;
-      while (x < W + 2) {
-        const w = wMin + Math.floor(rand() * (wMax - wMin));
-        const h = bMin + Math.floor(rand() * (bMax - bMin));
-        const roofPick = rand();
-        const roof: Building['roof'] =
-          isMobile
-            ? roofPick > 0.9 ? 'antenna' : roofPick > 0.78 ? 'pyramid' : 'flat'
-            : roofPick > 0.85 ? 'antenna' : roofPick > 0.7 ? 'pyramid' : roofPick > 0.55 ? 'double' : 'flat';
-        out.push({ x, w, h, roof });
-        x += w; // flush, no gaps
-      }
-      return out;
-    }
-
-    // Mobile portrait stretches the canvas vertically, which turns
-    // normal-width buildings into spindly towers. Compensate with WIDER
-    // footprints and SHORTER heights so the skyline reads as a squat,
-    // continuous city block rather than a row of chimneys.
-    const bBackMin = isMobile
-      ? Math.max(36, Math.round(H * 0.09))
-      : Math.max(14, Math.round(skyHeight * 0.16));
-    const bBackMax = isMobile
-      ? Math.max(bBackMin + 20, Math.round(H * 0.18))
-      : Math.max(bBackMin + 10, Math.round(skyHeight * 0.42));
-    const buildingsBack = generateRow(
-      [bBackMin, bBackMax],
-      isMobile ? [32, 58] : [12, 34],
-      -2
-    );
-
-    const bFrontMin = isMobile
-      ? Math.max(24, Math.round(H * 0.05))
-      : Math.max(8, Math.round(skyHeight * 0.08));
-    const bFrontMax = isMobile
-      ? Math.max(bFrontMin + 14, Math.round(H * 0.11))
-      : Math.max(bFrontMin + 6, Math.round(skyHeight * 0.24));
-    const buildingsFront = generateRow(
-      [bFrontMin, bFrontMax],
-      isMobile ? [40, 72] : [16, 40],
-      -Math.floor(rand() * 24) - 4
-    );
-
-    return { stars, clouds, buildingsBack, buildingsFront };
-  }, [H, HORIZON, viewportW]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = W;
-    canvas.height = H;
-    ctx.imageSmoothingEnabled = false;
-
-    const sunRadius = Math.max(10, Math.round(H * 0.067));
-    const moonRadius = Math.max(7, Math.round(H * 0.045));
-
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const moonRight = getMoonPhase() < 0.5 ? 1 : 0;
+    const start = performance.now();
+    let gl: WebGLRenderingContext | null = null;
+    let uniforms = {} as Record<UniformName, WebGLUniformLocation | null>;
     let raf = 0;
     let last = 0;
-    const frameMs = 1000 / Math.max(1, reduceMotion ? Math.min(targetFps, 8) : targetFps);
+    let visible = false;
+    let progress = 0;
+    // CSS px the host section has scrolled past the top of the viewport.
+    let scrolled = 0;
+    // The scene is transformed for parallax, so measure the section it sits in.
+    const host = wrap.parentElement ?? wrap;
 
-    function drawSky(preset: ReturnType<typeof getInterpolatedPreset>) {
-      if (!ctx) return;
-      let yPrev = 0;
-      for (let i = 0; i < Y_RATIOS.length; i++) {
-        const yEnd = Math.round(Y_RATIOS[i] * HORIZON);
-        ctx.fillStyle = preset.skyColors[i] ?? preset.skyColors[preset.skyColors.length - 1];
-        ctx.fillRect(0, yPrev, W, yEnd - yPrev);
-        yPrev = yEnd;
-      }
-      ctx.fillStyle = preset.groundColor;
-      ctx.fillRect(0, HORIZON, W, H - HORIZON);
-    }
+    function setup(): boolean {
+      gl = canvas!.getContext('webgl', {
+        antialias: false,
+        alpha: false,
+        depth: false,
+        stencil: false,
+        powerPreference: 'low-power',
+      });
+      if (!gl) return false;
 
-    function drawClouds(preset: ReturnType<typeof getInterpolatedPreset>) {
-      if (!ctx) return;
-      for (const c of layout.clouds) {
-        ctx.fillStyle = preset.cloudColors[c.colorIndex] ?? preset.cloudColors[0];
-        ctx.fillRect(c.x, c.y + 2, c.width, 1);
-        ctx.fillRect(c.x + 4, c.y + 1, c.width - 8, 1);
-        ctx.fillRect(c.x + 10, c.y, c.width - 20, 1);
-      }
-    }
-
-    function drawStars(t: number, h: number) {
-      if (!ctx) return;
-      const visibility = getHeroStarVisibility(h);
-      if (visibility <= 0.01) return;
-      for (const s of layout.stars) {
-        const tw = 0.5 + 0.5 * Math.sin(t * 1.4 + s.phase);
-        const a = (0.25 + s.brightness * 0.7) * tw * visibility;
-        if (a < 0.02) continue;
-        const tint =
-          s.brightness > 0.85
-            ? `rgba(255, 210, 150, ${a.toFixed(3)})`
-            : s.brightness > 0.55
-            ? `rgba(200, 185, 235, ${a.toFixed(3)})`
-            : `rgba(175, 200, 240, ${a.toFixed(3)})`;
-        ctx.fillStyle = tint;
-        if (s.large && a > 0.3) {
-          ctx.fillRect(s.x, s.y, 1, 1);
-          ctx.fillRect(s.x - 1, s.y, 1, 1);
-          ctx.fillRect(s.x + 1, s.y, 1, 1);
-          ctx.fillRect(s.x, s.y - 1, 1, 1);
-          ctx.fillRect(s.x, s.y + 1, 1, 1);
-        } else {
-          ctx.fillRect(s.x, s.y, 1, 1);
+      const program = gl.createProgram();
+      for (const [type, source] of [[gl.VERTEX_SHADER, VERT], [gl.FRAGMENT_SHADER, FRAG]] as const) {
+        const shader = gl.createShader(type);
+        if (!shader || !program) return false;
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          console.error('[PixelScene] shader compile failed:', gl.getShaderInfoLog(shader));
+          return false;
         }
+        gl.attachShader(program, shader);
+      }
+      if (!program) return false;
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error('[PixelScene] program link failed:', gl.getProgramInfoLog(program));
+        return false;
+      }
+      gl.useProgram(program);
+
+      // One oversized triangle covers the canvas.
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      const aPos = gl.getAttribLocation(program, 'aPos');
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+      uniforms = {} as Record<UniformName, WebGLUniformLocation | null>;
+      for (const name of UNIFORMS) uniforms[name] = gl.getUniformLocation(program, name);
+      resize();
+      return true;
+    }
+
+    function resize() {
+      const w = Math.max(1, Math.ceil(wrap!.clientWidth / PX));
+      const h = Math.max(1, Math.ceil(wrap!.clientHeight / PX));
+      if (canvas!.width !== w || canvas!.height !== h) {
+        canvas!.width = w;
+        canvas!.height = h;
+        canvas!.style.width = `${w * PX}px`;
+        canvas!.style.height = `${h * PX}px`;
+      }
+      gl?.viewport(0, 0, w, h);
+      dirtyRef.current = true;
+    }
+
+    // Skyline: 0 at rest, 1 once scrolled a full section height away.
+    // Terminal: 0 as its top enters the viewport, 1 when it reaches the top.
+    // Called from the Lenis scroll tick, so the parallax transform lands in the
+    // same frame as the content (see lenis-store).
+    function measureProgress() {
+      const rect = host.getBoundingClientRect();
+      const next =
+        view === 'skyline'
+          ? Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height)))
+          : Math.max(0, Math.min(1, (window.innerHeight - rect.top) / Math.max(1, window.innerHeight)));
+      if (view === 'skyline' && !reduceMotion) {
+        scrolled = Math.max(0, Math.min(rect.height, -rect.top));
+        wrap!.style.transform = `translate3d(0, ${(scrolled * PARALLAX).toFixed(1)}px, 0)`;
+      }
+      if (next !== progress) {
+        progress = next;
+        dirtyRef.current = true;
       }
     }
 
-    function drawSkyline(t: number, h: number) {
-      if (!ctx) return;
-      const isMobile = viewportW < 768;
-      const lightLevel = getSkylineLightLevel(h);
-      // Keep the bluish silhouette constant across day and night — only the
-      // window lights change with lightLevel. `lightLevel` peaks at dusk/
-      // dawn (≈1) and bottoms out at noon/midnight (≈0).
-      const backBodyColor = '#0c1426';
-      const frontBodyColor = '#050912';
-      const darkenStrength = 0.5;
-      const minWindowChance = isMobile ? 0.08 : 0.16;
-      const maxWindowChance = isMobile ? 0.34 : 0.58;
-      const windowChance = minWindowChance + (maxWindowChance - minWindowChance) * lightLevel;
-      const windowSpacingY = isMobile ? 4 : 3;
-      const windowSpacingX = isMobile ? 3 : 2;
+    function draw(now: number) {
+      if (!gl) return;
+      const w = canvas!.width;
+      const h = canvas!.height;
+      const hr = hourRef.current;
+      const preset = getInterpolatedPreset(hr);
+      const horizon = Math.floor(h * 0.86);
+      const sun = arc((hr - 5) / 14, w, horizon, 0.9);
+      // The moon is drawn by components/Moon.tsx, which travels the whole page.
+      const moon: [number, number] | null = null;
 
-      // Inter-skyline parallax. The whole canvas is translated by Hero's
-      // wrapper (≈0.72× scroll). On top of that we lift the FRONT row a little
-      // faster than the BACK row as you scroll, so the two skylines separate and
-      // the front one reads as closer. Lift is in canvas px (= screen px / the
-      // canvas's display scale), capped to one viewport so it stops once the
-      // hero is gone. Note: this steps in low-res canvas pixels — intentional
-      // for the pixel aesthetic, but it won't be perfectly subpixel-smooth.
-      const displayScale = viewportW > 0 ? viewportW / W : 1;
-      const viewportH = typeof window !== 'undefined' ? window.innerHeight : H;
-      const cappedScroll = reduceMotion ? 0 : Math.min(scrollRef.current, viewportH);
-      const backLift = Math.round((cappedScroll * 0.04) / displayScale);
-      const frontLift = Math.round((cappedScroll * 0.14) / displayScale);
-
-      // Hoisted per-frame constants shared by every building in every row.
-      const fadePower = isMobile ? 2.2 : 1.65;
-      const densityStart = isMobile ? 0.34 : 0.48;
-      const densityRange = isMobile ? 0.66 : 0.52;
-      const densityPower = isMobile ? 2.3 : 1.8;
-      const activationThreshold = 1 - windowChance;
-      const actEdge0 = activationThreshold - 0.14;
-      const actEdge1 = activationThreshold + 0.06;
-      // Pre-compute darkening color-stop alphas for the eased curve
-      // alpha(d) = max(0, ((d-0.14)/0.86)^1.55) * darkenStrength. A handful
-      // of stops approximates the curve well and replaces an H-per-building
-      // per-row fillRect loop with a single gradient fill.
-      const ds = darkenStrength;
-      const darkenStops: [number, number][] = [
-        [0, 0],
-        [0.14, 0],
-        [0.3, 0.085 * ds],
-        [0.5, 0.262 * ds],
-        [0.7, 0.522 * ds],
-        [0.85, 0.75 * ds],
-        [1, ds],
-      ];
-
-      function drawRow(buildings: Building[], bodyColor: string, baselineOffset: number, rowLift: number) {
-        if (!ctx) return;
-        for (const b of buildings) {
-          const topY = HORIZON + baselineOffset - b.h - rowLift;
-          const fullHeight = H - topY;
-
-          // Body + darkening as a single gradient fill.
-          ctx.fillStyle = bodyColor;
-          ctx.fillRect(b.x, topY, b.w, fullHeight);
-          const grad = ctx.createLinearGradient(0, topY, 0, H);
-          for (const [stop, alpha] of darkenStops) {
-            grad.addColorStop(stop, alpha <= 0.001 ? 'rgba(0,0,0,0)' : `rgba(0,0,0,${alpha.toFixed(3)})`);
-          }
-          ctx.fillStyle = grad;
-          ctx.fillRect(b.x, topY, b.w, fullHeight);
-
-          if (b.roof === 'antenna') {
-            ctx.fillStyle = bodyColor;
-            ctx.fillRect(b.x + Math.floor(b.w / 2), topY - 6, 1, 6);
-            ctx.fillRect(b.x + Math.floor(b.w / 2) - 1, topY - 6, 3, 1);
-          } else if (b.roof === 'pyramid') {
-            ctx.fillStyle = bodyColor;
-            for (let dy = 0; dy < Math.min(5, Math.floor(b.w / 2)); dy++) {
-              ctx.fillRect(b.x + dy, topY - dy - 1, b.w - dy * 2, 1);
-            }
-          } else if (b.roof === 'double') {
-            ctx.fillStyle = bodyColor;
-            ctx.fillRect(b.x + 2, topY - 3, 3, 3);
-            ctx.fillRect(b.x + b.w - 5, topY - 3, 3, 3);
-          }
-
-          const invH = 1 / Math.max(1, fullHeight);
-          for (let wy = 3; wy < fullHeight - 2; wy += windowSpacingY) {
-            const depth = wy * invH;
-            if (depth >= 1) break;
-            const fade = (1 - depth) ** fadePower;
-            if (fade <= 0.035) continue;
-            const densityFade = depth <= densityStart
-              ? 1
-              : Math.max(0, (1 - (depth - densityStart) / densityRange) ** densityPower);
-            if (densityFade <= 0.02) continue;
-            const fadeMul = fade * densityFade;
-            const worldY = topY + wy;
-            for (let wx = 2; wx < b.w - 1; wx += windowSpacingX) {
-              const noise = hash2D(b.x + wx, wy, 11);
-              if (noise < actEdge0) continue;
-              const activation = noise >= actEdge1 ? 1 : smoothstep(actEdge0, actEdge1, noise);
-              if (activation <= 0.03) continue;
-              // Most windows burn steady; only a sparse subset pulses, slowly,
-              // so the skyline reads calm instead of shimmering pixel-by-pixel.
-              const pulses = hash2D(b.x + wx, wy, 29) > 0.82;
-              const flicker = pulses ? 0.7 + 0.3 * Math.sin(t * 0.8 + noise * 40) : 1;
-              const a = (0.7 + flicker * 0.24) * fadeMul * activation;
-              if (a <= 0.04) continue;
-              // Blend window tint + alpha from day (pale yellow, half alpha)
-              // to night (warm amber, full alpha). `lightLevel` is 1 at
-              // night, 0 at noon.
-              const wg = Math.round(235 - 35 * lightLevel);
-              const wb = Math.round(180 - 70 * lightLevel);
-              const winAlpha = a * (0.5 + 0.5 * lightLevel);
-              ctx.fillStyle = `rgba(255, ${wg}, ${wb}, ${winAlpha.toFixed(2)})`;
-              ctx.fillRect(b.x + wx, worldY, 1, 1);
-            }
-          }
-        }
+      // On a narrow screen the copy spans the full width, so keep the sun in
+      // the upper sky where it cannot sit behind it.
+      if (w < 160) {
+        if (sun) sun[1] = Math.min(sun[1], Math.round(h * 0.2));
       }
 
-      // Both rows are permanent — drawn at full opacity, no reveal fade-in.
-      // Back lifts slowly, front lifts faster → the skylines parallax apart.
-      drawRow(layout.buildingsBack, backBodyColor, 0, backLift);
-      drawRow(layout.buildingsFront, frontBodyColor, Math.round(H * 0.22), frontLift);
+      gl.uniform2f(uniforms.uRes, w, h);
+      gl.uniform1f(uniforms.uTime, reduceMotion ? 0 : (now - start) / 1000);
+      gl.uniform1f(uniforms.uView, view === 'skyline' ? 0 : 1);
+      gl.uniform3fv(uniforms.uSky, preset.skyColors.flatMap(hexToVec3));
+      // Dark to light, so the shader can shade a cloud's belly and light its crest.
+      const clouds = preset.cloudColors.map(hexToVec3).sort((a, b) => a[0] + a[1] + a[2] - (b[0] + b[1] + b[2]));
+      gl.uniform3fv(uniforms.uCloud, clouds.flat());
+      gl.uniform3fv(uniforms.uGround, hexToVec3(preset.groundColor));
+      gl.uniform3fv(uniforms.uAccent, hexToVec3(preset.accentColor));
+      gl.uniform1f(uniforms.uLight, getLightLevel(hr));
+      gl.uniform1f(uniforms.uStars, getStarVisibility(hr));
+      gl.uniform3f(uniforms.uSun, sun?.[0] ?? 0, sun?.[1] ?? 0, sun ? Math.max(1, Math.round((h * 0.067) / 5)) : 0);
+      gl.uniform3f(uniforms.uMoon, moon?.[0] ?? 0, moon?.[1] ?? 0, moon ? Math.max(1, Math.round((h * 0.045) / 5)) : 0);
+      gl.uniform1f(uniforms.uMoonRight, moonRight);
+      gl.uniform1f(uniforms.uProgress, reduceMotion && view === 'skyline' ? 0 : progress);
+      gl.uniform1f(uniforms.uLift, scrolled / PX);
+      gl.uniform1f(uniforms.uCut, (scrolled * PARALLAX) / PX);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
 
-    function draw() {
-      if (!ctx) return;
-      const t = performance.now() / 1000;
-      const h = hourRef.current;
-      const preset = getInterpolatedPreset(h);
-
-      drawSky(preset);
-      drawStars(t, h);
-      drawClouds(preset);
-
-      // Moon first (in case sun and moon overlap, sun should be on top)
-      const moonPos = getMoonPos(h, H, HORIZON, W);
-      if (moonPos) {
-        drawMoon(ctx, Math.round(moonPos.x), Math.round(moonPos.y), moonRadius, moonPhase);
-      }
-
-      const sunPos = getSunPos(h, H, HORIZON, W);
-      if (sunPos) {
-        drawSun(ctx, Math.round(sunPos.x), Math.round(sunPos.y), sunRadius, t);
-      }
-
-      drawSkyline(t, h);
-    }
-
+    // Runs only while the scene is on screen.
     function loop(now: number) {
-      if (!visibleRef.current) {
-        raf = requestAnimationFrame(loop);
-        return;
-      }
-      // 60fps cap (lower for reduced-motion). The skyline content animates
-      // slowly, so 60 is plenty and keeps the main thread free for the
-      // native-rate cursor + scroll. Animation is real-time based.
-      if (now - last >= (reduceMotion ? frameMs : 1000 / 60)) {
-        last = now;
-        draw();
-      }
       raf = requestAnimationFrame(loop);
+      const due = !reduceMotion && now - last >= 1000 / fps;
+      if (!dirtyRef.current && !due) return;
+      dirtyRef.current = false;
+      last = now;
+      draw(now);
     }
 
-    draw();
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [layout, H, HORIZON, W, moonPhase, reduceMotion, targetFps, viewportW]);
+    if (!setup()) {
+      const id = window.setTimeout(() => setFailed(true), 0);
+      return () => window.clearTimeout(id);
+    }
+
+    // Paint once up front so the canvas is never a blank block, then start
+    // rendering a little before the scene scrolls into view.
+    draw(start);
+    const visibility = new IntersectionObserver(
+      ([entry]) => {
+        visible = Boolean(entry?.isIntersecting);
+        cancelAnimationFrame(raf);
+        if (visible) {
+          measureProgress();
+          dirtyRef.current = true;
+          raf = requestAnimationFrame(loop);
+        }
+      },
+      { rootMargin: '25% 0px' }
+    );
+    const offScroll = onLenisScroll(() => {
+      if (visible) measureProgress();
+    });
+    visibility.observe(host);
+    const resizer = new ResizeObserver(resize);
+    resizer.observe(wrap);
+
+    const onLost = (e: Event) => {
+      e.preventDefault();
+      cancelAnimationFrame(raf);
+    };
+    const onRestored = () => {
+      if (setup() && visible) raf = requestAnimationFrame(loop);
+    };
+    canvas.addEventListener('webglcontextlost', onLost);
+    canvas.addEventListener('webglcontextrestored', onRestored);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      visibility.disconnect();
+      offScroll();
+      resizer.disconnect();
+      canvas.removeEventListener('webglcontextlost', onLost);
+      canvas.removeEventListener('webglcontextrestored', onRestored);
+    };
+  }, [view, fps]);
+
+  // No WebGL: the skyline falls back to a flat sky; the terminal to nothing.
+  const fallback = failed && view === 'skyline' ? getInterpolatedPreset(hour) : null;
 
   return (
-    <canvas
-      ref={canvasRef}
+    <div
+      ref={wrapRef}
       aria-hidden
-      className={className}
-      style={{
-        imageRendering: 'pixelated',
-        width: '100%',
-        height: '100%',
-        display: 'block',
-      }}
-    />
+      data-scene={view}
+      className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}
+      style={
+        fallback
+          ? { background: `linear-gradient(to bottom, ${fallback.skyColors[0]}, ${fallback.skyColors[12]} 70%, var(--color-v2-bg))` }
+          : undefined
+      }
+    >
+      {!failed && <canvas ref={canvasRef} className="block" style={{ imageRendering: 'pixelated' }} />}
+    </div>
   );
 }

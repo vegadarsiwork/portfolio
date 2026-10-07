@@ -3,7 +3,7 @@
 import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { createElement, useRef, type CSSProperties, type ReactNode } from 'react';
 
-type Tag = 'h1' | 'h2' | 'h3' | 'p' | 'div';
+type Tag = 'h1' | 'h2' | 'h3' | 'p' | 'div' | 'span';
 
 interface Props {
   /** Plain string OR multiple lines as an array. */
@@ -21,8 +21,8 @@ interface Props {
 }
 
 /**
- * Animates a heading word-by-word as it enters the viewport.
- * Each word fades up with a stagger; the whole thing once-only via useInView.
+ * Animates a heading word-by-word as it enters the viewport. Each word fades
+ * up into place; the whole thing once-only via useInView.
  */
 export default function StaggerWords({
   children,
@@ -34,7 +34,9 @@ export default function StaggerWords({
   prefix,
 }: Props) {
   const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-15%' });
+  // Bottom-only margin: a heading that lands near the top of the screen after a
+  // jump (anchor link, restored scroll) still counts as in view.
+  const inView = useInView(ref, { once: true, margin: '0px 0px -15% 0px' });
   const prefersReducedMotion = useReducedMotion();
 
   const lines = Array.isArray(children) ? children : [children];
@@ -47,17 +49,17 @@ export default function StaggerWords({
       return (
         <motion.span
           key={`${li}-${i}`}
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{
-            duration: prefersReducedMotion ? 0.2 : 0.62,
+            duration: prefersReducedMotion ? 0.01 : 0.7,
             delay: prefersReducedMotion ? 0 : delay + idx * stagger,
             ease: [0.21, 0.47, 0.32, 0.98],
           }}
-          className="inline-block will-change-transform"
+          className="inline-block"
         >
           {word}
-          {i < words.length - 1 ? '\u00A0' : ''}
+          {i < words.length - 1 ? ' ' : ''}
         </motion.span>
       );
     });

@@ -129,15 +129,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <>
       {showPreloader && (
         <div
-          className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black transition-opacity duration-300 ${isLoaded ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+          className={`fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--color-v2-bg)] transition-opacity duration-300 ${isLoaded ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
         >
-          <div className="relative z-10 flex flex-col items-center gap-3">
-            <div
-              className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white"
-              aria-hidden="true"
-            />
-            <p className="font-monoHead text-[11px] uppercase tracking-[0.16em] text-white/65">loading</p>
-          </div>
+          <p className="pxl relative z-10 text-[var(--color-v2-text)]/70">
+            LOADING<span className="px-blink text-[var(--color-v2-orange)]">_</span>
+          </p>
         </div>
       )}
       {children}

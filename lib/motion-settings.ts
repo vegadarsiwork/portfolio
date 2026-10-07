@@ -7,10 +7,8 @@ export interface V2MotionSettings {
   coarsePointer: boolean;
   saveData: boolean;
   isMobile: boolean;
-  heroFps: number;
-  starFps: number;
-  starDensity: number;
-  scanlineOpacity: number;
+  /** Frame cap for the world scene's time-based animation. */
+  sceneFps: number;
   enableCursorSprite: boolean;
 }
 
@@ -20,10 +18,7 @@ function getInitialSettings(): V2MotionSettings {
     coarsePointer: false,
     saveData: false,
     isMobile: false,
-    heroFps: 30,
-    starFps: 15,
-    starDensity: 0.00035,
-    scanlineOpacity: 0.06,
+    sceneFps: 30,
     enableCursorSprite: true,
   };
 }
@@ -51,10 +46,7 @@ export function useV2MotionSettings(): V2MotionSettings {
         coarsePointer,
         saveData,
         isMobile,
-        heroFps: reduceMotion ? 8 : constrained ? 24 : 30,
-        starFps: reduceMotion ? 4 : constrained ? 10 : 15,
-        starDensity: constrained ? 0.0002 : 0.00035,
-        scanlineOpacity: reduceMotion ? 0.02 : constrained ? 0.035 : 0.06,
+        sceneFps: constrained ? 24 : 30,
         enableCursorSprite: !reduceMotion && !coarsePointer && !isMobile,
       });
     };

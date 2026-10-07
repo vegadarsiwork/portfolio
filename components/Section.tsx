@@ -1,72 +1,37 @@
-'use client';
-
-import { motion, useInView, useReducedMotion } from 'framer-motion';
-import { useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import PixelReveal from './PixelReveal';
+import StaggerWords from './StaggerWords';
 
 interface SectionProps {
   id?: string;
-  marker?: string;
-  label?: string;
+  /** Two-digit position shown in the label, e.g. "02". */
+  index: string;
+  label: string;
+  /** Pixel heading. Omit for a section that brings its own. */
+  title?: string;
+  intro?: string;
   children: ReactNode;
   className?: string;
-  /** Max inner column width. Defaults to 5xl. */
-  width?: 'narrow' | 'normal' | 'wide';
 }
 
-const WIDTH_CLASS: Record<NonNullable<SectionProps['width']>, string> = {
-  narrow: 'max-w-3xl',
-  normal: 'max-w-5xl',
-  wide: 'max-w-6xl',
-};
-
 /**
- * Shared section wrapper — centered inner column with a CRT chapter marker.
+ * Shared section wrapper: one left-aligned column with a small label, a pixel
+ * heading and an optional intro line.
  */
-export default function Section({
-  id,
-  marker,
-  label,
-  children,
-  className = '',
-  width = 'normal',
-}: SectionProps) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-15%' });
-  const prefersReducedMotion = useReducedMotion();
-
+export default function Section({ id, index, label, title, intro, children, className = '' }: SectionProps) {
   return (
-    <section
-      id={id}
-      ref={ref}
-      className={`relative py-20 md:py-40 px-5 md:px-12 ${className}`}
-    >
-      <div className={`${WIDTH_CLASS[width]} mx-auto`}>
-        {(marker || label) && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{
-              duration: prefersReducedMotion ? 0.2 : 0.55,
-              ease: [0.21, 0.47, 0.32, 0.98],
-            }}
-            className="flex items-center justify-center gap-3 mb-12 md:mb-16"
-            style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-          >
-            <span className="h-px w-12 bg-[var(--color-v2-muted)]/30" />
-            {marker && (
-              <span className="text-[var(--color-v2-orange)] text-xs md:text-sm tracking-[0.25em]">
-                {marker}
-              </span>
-            )}
-            {label && (
-              <span className="text-[10px] md:text-xs tracking-[0.3em] text-[var(--color-v2-muted)]">
-                {label}
-              </span>
-            )}
-            <span className="h-px w-12 bg-[var(--color-v2-muted)]/30" />
-          </motion.div>
+    <section id={id} className={`relative py-16 md:py-28 px-5 md:px-12 ${className}`}>
+      <div className="max-w-5xl mx-auto">
+        <PixelReveal>
+          <p className="meta mb-5">
+            <span className="text-[var(--color-v2-orange)]">{index}</span> / {label}
+          </p>
+        </PixelReveal>
+        {title && (
+          <StaggerWords className="pxh-2 px-glow text-[var(--color-v2-text)] mb-5 max-w-3xl">{title}</StaggerWords>
         )}
-        {children}
+        {intro && <p className="text-base md:text-lg text-[var(--color-v2-text)]/60 max-w-xl">{intro}</p>}
+        <div className={title || intro ? 'mt-10 md:mt-14' : ''}>{children}</div>
       </div>
     </section>
   );

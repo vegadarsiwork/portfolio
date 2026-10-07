@@ -1,219 +1,124 @@
 'use client';
 
-import { motion, useInView } from 'framer-motion';
-import { useRef, useState } from 'react';
-import Image from 'next/image';
+import { useState } from 'react';
 import type { Chapter } from '@/data/chapters';
 import StaggerWords from './StaggerWords';
+import PixelReveal from './PixelReveal';
+import PixelDiagram from './PixelDiagram';
+import DitheredImage from './DitheredImage';
+import CrtTv from './CrtTv';
 
-interface Props {
-  chapter: Chapter;
+function Links({ chapter }: { chapter: Chapter }) {
+  if (!chapter.demo && !chapter.repo) return null;
+  return (
+    <span className="flex gap-4 text-sm">
+      {chapter.demo && (
+        <a href={chapter.demo} target="_blank" rel="noreferrer" className="link">
+          Live
+        </a>
+      )}
+      {chapter.repo && (
+        <a href={chapter.repo} target="_blank" rel="noreferrer" className="link">
+          Code
+        </a>
+      )}
+    </span>
+  );
 }
 
 /**
- * Stacked editorial chapter — everything flows in a single centered column:
- * numeral + title + metaphor → visual → story → meta + links.
+ * A featured project: title and one-line pitch across the top, then the visual
+ * beside the story.
  */
-export default function ProjectChapter({ chapter }: Props) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-15%' });
-
+export default function ProjectChapter({ chapter, index }: { chapter: Chapter; index: number }) {
   return (
-    <article
-      ref={ref}
-      className="relative px-5 md:px-12 py-16 md:py-28 border-t border-[var(--color-v2-muted)]/15"
-    >
-      <div className="max-w-3xl mx-auto text-center">
-        {/* Numeral + label */}
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.05 }}
-          className="inline-flex items-baseline gap-4 mb-4"
-        >
-          <span
-            className="text-[var(--color-v2-orange)] text-xs md:text-sm tracking-[0.25em]"
-            style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-          >
-            PROJECT
-          </span>
-          <span
-            className="text-[var(--color-v2-orange)] text-4xl sm:text-5xl md:text-7xl leading-none"
-            style={{
-              fontFamily: 'var(--font-family-display-v2)',
-              fontWeight: 500,
-              textShadow: '0 0 24px color-mix(in srgb, var(--color-v2-orange) 45%, transparent)',
-            }}
-          >
-            {chapter.numeral}
-          </span>
-        </motion.div>
-
-        {/* Title */}
-        <StaggerWords
-          as="h3"
-          delay={0.15}
-          stagger={0.1}
-          className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight text-[var(--color-v2-text)] mb-5 break-words"
-          style={{
-            fontFamily: 'var(--font-family-display-v2)',
-            fontWeight: 400,
-            textShadow: '0 0 20px color-mix(in srgb, var(--color-v2-orange) 25%, transparent), 0 0 40px color-mix(in srgb, var(--color-v2-orange) 15%, transparent)',
-          }}
-        >
-          {chapter.title}
-        </StaggerWords>
-
-        {/* Metaphor */}
-        <motion.p
-          initial={{ opacity: 0, y: 8 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-lg md:text-2xl italic text-[var(--color-v2-purple)] max-w-3xl mx-auto mb-12 md:mb-16"
-          style={{ filter: 'brightness(1.4)' }}
-        >
+    <article className="border-t border-[var(--color-v2-muted)]/20 py-12 md:py-16">
+      <PixelReveal>
+        <p className="meta mb-3 tabular-nums">
+          Project {String(index + 1).padStart(2, '0')} / {chapter.year}
+        </p>
+      </PixelReveal>
+      <StaggerWords as="h3" stagger={0.1} className="pxh-3 px-glow text-[var(--color-v2-text)] break-words">
+        {chapter.title}
+      </StaggerWords>
+      <PixelReveal delay={0.1}>
+        <p className="mt-3 text-lg md:text-xl leading-snug text-[var(--color-v2-text)]/70 max-w-2xl">
           {chapter.metaphor}
-        </motion.p>
+        </p>
+      </PixelReveal>
 
-        {/* Visual block */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.28, ease: [0.21, 0.47, 0.32, 0.98] }}
-          className="mb-10 md:mb-14"
-        >
-          <ChapterVisual chapter={chapter} />
-          <div
-            className="mt-3 text-[11px] tracking-[0.2em] text-[var(--color-v2-muted)]"
-            style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-          >
-            -- {chapter.caption}
+      <div className="mt-8 md:mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+        <ChapterVisual chapter={chapter} />
+
+        <div>
+          <div className="space-y-4 text-[15px] md:text-base leading-relaxed text-[var(--color-v2-text)]/80">
+            {chapter.story.map((p, i) => (
+              <PixelReveal key={i}>
+                <p>{p}</p>
+              </PixelReveal>
+            ))}
           </div>
-        </motion.div>
-
-        {/* Story — single centered column */}
-        <div className="max-w-2xl mx-auto space-y-5 text-[var(--color-v2-text)]/85 text-base md:text-[17px] leading-relaxed text-left">
-          {chapter.story.map((p, i) => (
-            <motion.p
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.35 + i * 0.08 }}
-            >
-              {p}
-            </motion.p>
-          ))}
+          <PixelReveal className="mt-6 flex flex-wrap items-baseline gap-x-6 gap-y-3">
+            <span className="meta">{chapter.meta}</span>
+            <Links chapter={chapter} />
+          </PixelReveal>
         </div>
-
-        {/* Meta + links row */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.55 }}
-          className="mt-12 md:mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-4"
-          style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-        >
-          <span className="text-[10px] md:text-xs tracking-[0.25em] text-[var(--color-v2-muted)]">
-            {chapter.meta}
-          </span>
-          <span className="text-[10px] md:text-xs tracking-[0.25em] text-[var(--color-v2-muted)]/60">
-            / {chapter.year} /
-          </span>
-          <div className="flex gap-3">
-            {chapter.demo && (
-              <a
-                href={chapter.demo}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center min-h-[44px] text-[11px] tracking-[0.2em] px-4 py-2 border border-[var(--color-v2-orange)]/60 text-[var(--color-v2-orange)] hover:bg-[var(--color-v2-orange)] hover:text-[var(--color-v2-bg)] transition-colors"
-              >
-                LIVE -&gt;
-              </a>
-            )}
-            {chapter.repo && (
-              <a
-                href={chapter.repo}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center min-h-[44px] text-[11px] tracking-[0.2em] px-4 py-2 border border-[var(--color-v2-muted)]/40 text-[var(--color-v2-text)] hover:border-[var(--color-v2-text)] transition-colors"
-              >
-                CODE -&gt;
-              </a>
-            )}
-          </div>
-        </motion.div>
       </div>
     </article>
   );
 }
 
+/** A project that gets one line instead of a chapter. */
+export function ProjectRow({ chapter }: { chapter: Chapter }) {
+  return (
+    <PixelReveal>
+      <div className="border-t border-[var(--color-v2-muted)]/20 py-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-x-8 gap-y-2 md:items-baseline">
+        <div>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h3 className="text-lg font-medium text-[var(--color-v2-text)]">{chapter.title}</h3>
+            <span className="meta tabular-nums">{chapter.year}</span>
+          </div>
+          <p className="mt-1 text-sm md:text-[15px] leading-relaxed text-[var(--color-v2-text)]/70 max-w-2xl">
+            {chapter.metaphor}
+          </p>
+          <p className="meta mt-2">{chapter.meta}</p>
+        </div>
+        <Links chapter={chapter} />
+      </div>
+    </PixelReveal>
+  );
+}
+
 /**
- * Project visual. Renders `chapter.image` (a screenshot under /public, e.g.
- * '/projects/truelend.png') when set; otherwise — or if the image fails to
- * load — falls back to a tinted pixel title-card so it never looks unfinished.
+ * Project visual, in order of preference: `chapter.image` (a screenshot under
+ * /public, shown through a dither filter that clears on hover), then
+ * `chapter.diagram` (an animated pixel diagram), then a plain title-card so a
+ * chapter never looks unfinished.
  */
 function ChapterVisual({ chapter }: { chapter: Chapter }) {
   const [imgFailed, setImgFailed] = useState(false);
   const showImage = Boolean(chapter.image) && !imgFailed;
 
   return (
-    <div
-      className="relative aspect-[16/9] w-full overflow-hidden border border-[var(--color-v2-muted)]/20"
-      style={{ backgroundColor: 'var(--color-v2-surface)' }}
-    >
-      {showImage ? (
-        <Image
-          src={chapter.image as string}
-          alt={`${chapter.title} — screenshot`}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, 800px"
-          onError={() => setImgFailed(true)}
-        />
-      ) : (
-        <>
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `radial-gradient(ellipse at 50% 70%, ${chapter.tint}66 0%, transparent 55%), linear-gradient(135deg, ${chapter.tint}30 0%, transparent 70%)`,
-            }}
+    <div>
+      <CrtTv tint={chapter.tint}>
+        {showImage ? (
+          <DitheredImage
+            src={chapter.image as string}
+            alt={`${chapter.title} — screenshot`}
+            onError={() => setImgFailed(true)}
           />
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-30 mix-blend-overlay"
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 4px)',
-            }}
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(0deg, rgba(0,0,0,0.4) 0 1px, transparent 1px 3px)',
-            }}
-          />
-          <div className="relative z-10 h-full flex flex-col items-center justify-center p-6 md:p-10 text-center">
-            <div
-              className="text-[10px] tracking-[0.3em] text-[var(--color-v2-text)]/55 mb-3"
-              style={{ fontFamily: 'var(--font-family-pixel-v2)' }}
-            >
-              {chapter.meta.split('·')[0]?.trim()}
-            </div>
-            <div
-              className="text-3xl md:text-5xl tracking-tight text-[var(--color-v2-text)]"
-              style={{
-                fontFamily: 'var(--font-family-display-v2)',
-                fontWeight: 500,
-                textShadow: `0 0 24px ${chapter.tint}`,
-              }}
-            >
+        ) : chapter.diagram ? (
+          <PixelDiagram kind={chapter.diagram} tint={chapter.tint} label={`${chapter.title} — ${chapter.caption}`} />
+        ) : (
+          <div className="h-full flex items-center justify-center p-6 text-center">
+            <span className="pxh-3" style={{ color: chapter.tint }}>
               {chapter.title}
-            </div>
+            </span>
           </div>
-        </>
-      )}
+        )}
+      </CrtTv>
+      <p className="mt-3 text-sm text-[var(--color-v2-muted)]">{chapter.caption}</p>
     </div>
   );
 }

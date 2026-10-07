@@ -1,9 +1,13 @@
-// Narrative chapter data for the /v2 redesign.
-// Descriptions grounded in the actual repos / deployments.
+import type { DiagramKind } from '@/components/PixelDiagram';
+
+// Project data, in display order. Descriptions grounded in the actual repos /
+// deployments.
 
 export type Chapter = {
   numeral: string;
   title: string;
+  /** Featured projects get a full chapter; the rest are listed as one-line rows. */
+  featured?: boolean;
   metaphor: string;
   story: string[];
   meta: string;
@@ -13,6 +17,8 @@ export type Chapter = {
   /** Screenshot under /public, e.g. '/projects/truelend.png'. Falls back to a
    *  tinted title-card when unset or if the file 404s. */
   image?: string;
+  /** Animated pixel diagram shown when there is no screenshot. */
+  diagram?: DiagramKind;
   /** Tint used in the thumbnail block */
   tint: string;
   /** A short caption shown under the visual */
@@ -22,7 +28,40 @@ export type Chapter = {
 export const chapters: Chapter[] = [
   {
     numeral: 'I',
+    title: 'TRUELEND CRM',
+    featured: true,
+    metaphor: 'A job queue with no queue — a loan-lead CRM that runs async work off a Postgres table.',
+    story: [
+      'Affiliate-driven CRM for a Direct Selling Agent. Public capture forms and an EMI calculator feed leads into admin, department, and affiliate portals, each scoped by role — auth, RBAC, spam protection, transactional email, web push.',
+      'The interesting part is the constraint: it had to run at near-zero cost, so I built the async layer myself instead of paying for a queue. Background jobs drain off a Postgres table — each claimed so it runs once and retried if it fails — triggered by cron and Durable Object alarms. Turborepo monorepo, Next.js 16 on Cloudflare Workers via OpenNext, Neon Postgres with Drizzle. It survives a worker dying mid-job, and it scales to a real broker without a rewrite.',
+    ],
+    meta: 'BACKEND · POSTGRES-AS-QUEUE · NEXT.JS + CLOUDFLARE',
+    year: '2026',
+    tint: '#ff8c42',
+    diagram: 'table',
+    caption: 'A job queue with no queue — built on a Postgres table.',
+  },
+  {
+    numeral: 'II',
+    title: 'SENTINEL',
+    featured: true,
+    metaphor: 'A multi-agent intelligence system that routes a question to the right specialists — and corrects itself when they fail.',
+    story: [
+      'Built for the NIAT Agentathon. You type a query; a routing agent classifies intent and a dynamic orchestrator dispatches it across nine specialist agents — company scouts, risk hunters, analysts, debuggers, memo writers — assembling the answer as they go.',
+      'The engineering is in the failure handling. Llama 3.3 70B on Groq with a Gemini fallback, 429 backoff, and self-correcting retries that drop the temperature and re-ask when a model returns unparseable JSON. Every agent runs the same retry path, and the retries surface live — amber flashes on an animated agent graph.',
+      'FastAPI streams the whole run over SSE into a mission-control UI (React + Vite) wired to the real event stream, not a mockup. With no API key it falls back to deterministic mock data so the demo never dies on stage.',
+    ],
+    meta: 'SYSTEMS · MULTI-AGENT ORCHESTRATION · FASTAPI + SSE',
+    year: '2026',
+    repo: 'https://github.com/vegadarsiwork/agentathon',
+    tint: '#6c5cff',
+    diagram: 'agents',
+    caption: 'Dynamic agent routing with self-correcting retries, streamed live.',
+  },
+  {
+    numeral: 'III',
     title: 'PULSEQUEUE',
+    featured: true,
     metaphor: 'A distributed workflow engine in Go — the project where I stop building apps and start building infrastructure.',
     story: [
       'It started as an excuse to understand what actually happens underneath the async abstractions every web app leans on. I had wired up enough queues and cron jobs as black boxes; I wanted to build one from the metal up and find out what exactly-once, on-time, survives-a-crash really costs.',
@@ -32,23 +71,11 @@ export const chapters: Chapter[] = [
     meta: 'SYSTEMS · GO · CONCURRENCY + QUEUES',
     year: '2026',
     tint: '#36c2a8',
+    diagram: 'queue',
     caption: 'Concurrent workers, persistent queue, retries — built to understand them.',
   },
   {
-    numeral: 'II',
-    title: 'TRUELEND CRM',
-    metaphor: 'A job queue with no queue — a loan-lead CRM that runs async work off a Postgres table.',
-    story: [
-      'Affiliate-driven CRM for a Direct Selling Agent. Public capture forms and an EMI calculator feed leads into admin, department, and affiliate portals, each scoped by role — auth, RBAC, spam protection, transactional email, web push.',
-      'The interesting part is the constraint: it had to run at near-zero cost, so I built the async layer myself instead of paying for a queue. Background jobs drain off a Postgres table — each claimed so it runs once and retried if it fails — triggered by cron and Durable Object alarms. Turborepo monorepo, Next.js 16 on Cloudflare Workers via OpenNext, Neon Postgres with Drizzle. It survives a worker dying mid-job, and it scales to a real broker without a rewrite.',
-    ],
-    meta: 'BACKEND · POSTGRES-AS-QUEUE · NEXT.JS + CLOUDFLARE',
-    year: '2026',
-    tint: '#ff8c42',
-    caption: 'A job queue with no queue — built on a Postgres table.',
-  },
-  {
-    numeral: 'III',
+    numeral: 'IV',
     title: 'LINCHPIN STUDIO',
     metaphor: 'The internal dashboard I built during my Linchpin internship.',
     story: [
@@ -60,10 +87,11 @@ export const chapters: Chapter[] = [
     demo: 'https://linchpin-dashboard.vercel.app',
     repo: 'https://github.com/vegadarsiwork/linchpin-dashboard',
     tint: '#b06ab3',
+    diagram: 'roles',
     caption: 'Three roles, one dashboard.',
   },
   {
-    numeral: 'IV',
+    numeral: 'V',
     title: 'SPICE EXPRESS',
     metaphor: 'Logistics and dispatch software for a courier business.',
     story: [
@@ -75,22 +103,8 @@ export const chapters: Chapter[] = [
     demo: 'https://spiceexpress.vercel.app',
     repo: 'https://github.com/vegadarsiwork/spiceexpress',
     tint: '#e2522b',
+    diagram: 'route',
     caption: 'Tracking, pricing, and dispatch in one place.',
-  },
-  {
-    numeral: 'V',
-    title: 'SENTINEL',
-    metaphor: 'A multi-agent intelligence system that routes a question to the right specialists — and corrects itself when they fail.',
-    story: [
-      'Built for the NIAT Agentathon. You type a query; a routing agent classifies intent and a dynamic orchestrator dispatches it across nine specialist agents — company scouts, risk hunters, analysts, debuggers, memo writers — assembling the answer as they go.',
-      'The engineering is in the failure handling. Llama 3.3 70B on Groq with a Gemini fallback, 429 backoff, and self-correcting retries that drop the temperature and re-ask when a model returns unparseable JSON. Every agent runs the same retry path, and the retries surface live — amber flashes on an animated agent graph.',
-      'FastAPI streams the whole run over SSE into a mission-control UI (React + Vite) wired to the real event stream, not a mockup. With no API key it falls back to deterministic mock data so the demo never dies on stage.',
-    ],
-    meta: 'SYSTEMS · MULTI-AGENT ORCHESTRATION · FASTAPI + SSE',
-    year: '2026',
-    repo: 'https://github.com/vegadarsiwork/agentathon',
-    tint: '#6c5cff',
-    caption: 'Dynamic agent routing with self-correcting retries, streamed live.',
   },
   {
     numeral: 'VI',
@@ -105,6 +119,7 @@ export const chapters: Chapter[] = [
     demo: 'https://rennowise.in',
     repo: 'https://github.com/vegadarsiwork/rennowise',
     tint: '#4361ee',
+    diagram: 'geo',
     caption: 'GPS-verified field audits.',
   },
 ];

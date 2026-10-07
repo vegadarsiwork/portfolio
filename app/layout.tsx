@@ -2,6 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 import React from 'react'
 import Providers from './providers'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const metadata: Metadata = {
   title: 'Vega Darsi — Developer & Designer',
@@ -45,6 +47,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Providers>{children}</Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
